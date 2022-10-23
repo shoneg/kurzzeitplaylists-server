@@ -1,0 +1,8 @@
+<h1>Playlists</h1>
+<ul>
+    {% for playlist in playlists %}
+    <li><a href=/edit/{{playlist.id}} >{{ playlist.name }}</a></li>
+    {% else %}
+    <li>Seems like you don't have any playlist…</li>
+    {% endfor %}
+</ul>
