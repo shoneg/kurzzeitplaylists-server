@@ -9,6 +9,6 @@ export const authView: RequestHandler = (req, res) => {
 }
 
 export const logout: RequestHandler = (req, res) => {
-    req.logout({}, (e) => { throw e });
+    req.logout(e => { if (e) { throw e } });
     res.redirect('/');
 }
