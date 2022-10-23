@@ -1,9 +1,11 @@
-import { ensureAuthenticated } from './customMiddleware';
+import { ensureAuthenticated, logging } from './customMiddleware';
 import { Router } from 'express';
 import playlistRouter from './playlists';
 import authRouter from './auth';
 
 const rootRouter = Router();
+
+rootRouter.all('*', logging);
 
 rootRouter.get('/', (req, res) => {
   if (!req.user) {
@@ -15,9 +17,5 @@ rootRouter.get('/', (req, res) => {
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/playlists', ensureAuthenticated, playlistRouter);
-
-rootRouter.get('/test', (req, res) => {
-  res.send('works');
-});
 
 export default rootRouter;
