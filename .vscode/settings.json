@@ -50,11 +50,11 @@
             "italic": false
         }
     ],
-    "codemetrics.basics.ComplexityLevelLow": 10,
+    "codemetrics.basics.ComplexityLevelLow": 0,
     "codemetrics.basics.ComplexityLevelNormal": 20,
     "codemetrics.basics.ComplexityLevelHigh": 25,
-    "codemetrics.basics.ComplexityLevelLowDescription": "Everything okay",
-    "codemetrics.basics.CodeLensHiddenUnder": 5,
+    "codemetrics.basics.ComplexityLevelLowDescription": "Everything good",
+    "codemetrics.basics.CodeLensHiddenUnder": 10,
     "codemetrics.basics.ComplexityTemplate": "Complexity is {0} ({1})",
     "codemetrics.basics.ComplexityLevelNormalDescription": "Don't go much father",
     "codemetrics.basics.ComplexityLevelHighDescription": "You should refactor something",
