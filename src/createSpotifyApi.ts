@@ -3,7 +3,7 @@ import SpotifyWebApi from 'spotify-web-api-node';
 import { CLIENT_ID, CLIENT_SECRET, HOST, PORT } from './config';
 import { MyUser } from './types';
 
-export const authCallbackPath = Object.freeze('/auth/spotify/callback');
+const authCallbackPath = Object.freeze('/auth/callback');
 const redirectUri = Object.freeze(`http://${HOST}:${PORT}${authCallbackPath}`);
 
 export const strategy = new SpotifyStrategy(
@@ -13,7 +13,7 @@ export const strategy = new SpotifyStrategy(
         callbackURL: redirectUri,
     },
     function (accessToken, refreshToken, expires_in, profile, done) {
-        // asynchronous verification, for effect...
+        // asynchronous verification, for effect…
         process.nextTick(function () {
             // To keep the example simple, the user's spotify profile is returned to
             // represent the logged-in user. In a typical application, you would want

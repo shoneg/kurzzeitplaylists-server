@@ -1,7 +1,7 @@
-import express from 'express';
-import consolidate from 'consolidate';
-import { HOST, PORT, SESSION_SECRET } from './src/config';
+import { HOST, PORT } from './src/config';
 import { initPassport } from './src/passport';
+import consolidate from 'consolidate';
+import express from 'express';
 import rootRouter from './src/handlers';
 
 // Initialize the express engine
@@ -19,5 +19,5 @@ app.use('', rootRouter);
 
 // Server setup
 app.listen(PORT, 'localhost', 100, () => {
-    console.log(`Kurzzeitplaylistserver is now running on http://${HOST}:${PORT}/`);
+    console.log(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
 });
