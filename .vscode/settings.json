@@ -1,0 +1,63 @@
+{
+    "prettier.jsxSingleQuote": false,
+    "prettier.printWidth": 120,
+    "prettier.singleQuote": true,
+    "prettier.tabWidth": 2,
+    "better-comments.tags": [
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "#",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        }
+    ],
+    "codemetrics.basics.ComplexityLevelLow": 10,
+    "codemetrics.basics.ComplexityLevelNormal": 20,
+    "codemetrics.basics.ComplexityLevelHigh": 25,
+    "codemetrics.basics.ComplexityLevelLowDescription": "Everything okay",
+    "codemetrics.basics.CodeLensHiddenUnder": 5,
+    "codemetrics.basics.ComplexityTemplate": "Complexity is {0} ({1})",
+    "codemetrics.basics.ComplexityLevelNormalDescription": "Don't go much father",
+    "codemetrics.basics.ComplexityLevelHighDescription": "You should refactor something",
+    "codemetrics.basics.ComplexityLevelExtremeDescription": "Much too high",
+    "codemetrics.basics.ComplexityLevelExtreme": 30
+}

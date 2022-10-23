@@ -19,5 +19,5 @@ app.use('', rootRouter);
 
 // Server setup
 app.listen(PORT, 'localhost', 100, () => {
-    console.log(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
+  console.log(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
 });
