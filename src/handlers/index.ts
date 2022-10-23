@@ -1,7 +1,8 @@
 import { ensureAuthenticated, logging } from './customMiddleware';
+import { falsePathErrorView } from './service';
 import { Router } from 'express';
-import playlistRouter from './playlists';
 import authRouter from './auth';
+import playlistRouter from './playlists';
 
 const rootRouter = Router();
 
@@ -17,5 +18,6 @@ rootRouter.get('/', (req, res) => {
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/playlists', ensureAuthenticated, playlistRouter);
+rootRouter.all('*', falsePathErrorView);
 
 export default rootRouter;

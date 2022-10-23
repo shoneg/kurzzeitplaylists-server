@@ -8,10 +8,10 @@ export const authView: RequestHandler = (req, res) => {
   }
 };
 
-export const logout: RequestHandler = (req, res) => {
+export const logout: RequestHandler = (req, res, next) => {
   req.logout((e) => {
     if (e) {
-      throw e;
+      next(e);
     }
   });
   res.redirect('/');

@@ -14,7 +14,8 @@ export default class Logger {
     this.tag = `[${tag}]`;
   }
 
-  private messageMapper = (messages: any[]) => messages.map((m) => JSON.stringify(m, null, 2));
+  // private messageMapper = (messages: any[]) => messages.map((m) => JSON.stringify(m, null, 2));
+  private messageMapper = (x: any[]) => x;
 
   public log(...messages: any[]) {
     if (this.debug == 0) {

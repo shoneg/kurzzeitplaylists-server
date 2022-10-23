@@ -4,6 +4,7 @@ import consolidate from 'consolidate';
 import express from 'express';
 import rootRouter from './src/handlers';
 import Logger, { DEBUG } from './src/utils/logger';
+import { defaultErrorHandler } from './src/handlers/errorHandlers';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
@@ -19,6 +20,8 @@ initPassport();
 app.engine('html', consolidate.nunjucks);
 
 app.use('', rootRouter);
+
+app.use(defaultErrorHandler);
 
 // Server setup
 app.listen(PORT, 'localhost', 100, () => {
