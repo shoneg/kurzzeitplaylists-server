@@ -1,10 +1,12 @@
+import { defaultErrorHandler } from './src/handlers/errorHandlers';
 import { HOST, PORT } from './src/config';
 import { initPassport } from './src/passport';
 import consolidate from 'consolidate';
 import express from 'express';
-import rootRouter from './src/handlers';
 import Logger, { DEBUG } from './src/utils/logger';
-import { defaultErrorHandler } from './src/handlers/errorHandlers';
+import moment from 'moment';
+import rootRouter from './src/handlers';
+import { refreshAllSessions } from './src/db';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
@@ -27,3 +29,6 @@ app.use(defaultErrorHandler);
 app.listen(PORT, 'localhost', 100, () => {
   logger.info(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
 });
+
+// refresh tokens of all users
+setInterval(refreshAllSessions, moment.duration(60, 's').asMilliseconds());

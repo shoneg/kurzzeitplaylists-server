@@ -2,16 +2,10 @@ import { RequestHandler } from 'express';
 import { spotify } from '../../createSpotifyApi';
 import Logger, { DEBUG } from '../../utils/logger';
 
-const logger = new Logger(DEBUG.WARN, '/handlers/playlists')
+const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
 export const playlistsView: RequestHandler = (req, res) => {
-  spotify
-    .getUserPlaylists()
-    .then((data) => {
-      const playlists = data.body.items;
-      res.render('playlists.html', { playlists });
-    })
-    .catch((e) => logger.error(e));
+  res.render('playlists.html', { user: req.user });
 };
 
 export const editPlaylistView: RequestHandler = (req, res) => {
@@ -19,5 +13,9 @@ export const editPlaylistView: RequestHandler = (req, res) => {
   spotify
     .getPlaylist(id)
     .then((data) => res.send(data))
-    .catch(logger.error);
+    .catch((e) => logger.error(e));
+};
+
+export const recognize: RequestHandler = (req, res) => {
+  res.send();
 };

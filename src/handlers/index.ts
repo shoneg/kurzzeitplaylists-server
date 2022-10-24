@@ -12,7 +12,7 @@ rootRouter.get('/', (req, res) => {
   if (!req.user) {
     res.redirect('/auth');
   } else {
-    res.render('layout.html', { user: req.user });
+    res.redirect('/playlists');
   }
 });
 

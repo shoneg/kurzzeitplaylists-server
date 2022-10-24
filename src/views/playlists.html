@@ -1,8 +1,20 @@
-<h1>Playlists</h1>
-<ul>
-    {% for playlist in playlists %}
-    <li><a href=/playlists/{{playlist.id}} >{{ playlist.name }}</a></li>
-    {% else %}
-    <li>Seems like you don't have any playlist…</li>
-    {% endfor %}
-</ul>
+<!DOCTYPE html>
+<head>
+    <title>Kurzzeitplaylists</title>
+</head>
+<body>
+    {% if user %}
+    <p>
+      <a onclick="fetch('/playlists/recognize')">Recognize Playlists</a> |
+      <a href="/auth/logout">Log Out</a> |
+      <a href="/auth/logout">Delete Account</a>
+    </p>
+    <ul>
+        {% for playlist in user.playlists %}
+        <li><a href=/playlists/{{playlist.id}} >{{ playlist.name }}</a></li>
+        {% else %}
+        Seems like you don't have any playlist…
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
