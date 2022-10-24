@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { spotify } from '../../createSpotifyApi';
+import { User } from '../../types';
 import Logger, { DEBUG } from '../../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
@@ -10,7 +10,7 @@ export const playlistsView: RequestHandler = (req, res) => {
 
 export const editPlaylistView: RequestHandler = (req, res, next) => {
   const { id } = req.params;
-  spotify
+  (req.user as User).spotifyApi
     .getPlaylist(id)
     .then((data) => res.send(data))
     .catch(next);
