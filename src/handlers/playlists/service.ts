@@ -8,12 +8,12 @@ export const playlistsView: RequestHandler = (req, res) => {
   res.render('playlists.html', { user: req.user });
 };
 
-export const editPlaylistView: RequestHandler = (req, res) => {
+export const editPlaylistView: RequestHandler = (req, res, next) => {
   const { id } = req.params;
   spotify
     .getPlaylist(id)
     .then((data) => res.send(data))
-    .catch((e) => logger.error(e));
+    .catch(next);
 };
 
 export const recognize: RequestHandler = (req, res) => {
