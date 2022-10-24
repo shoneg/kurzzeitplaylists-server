@@ -1,4 +1,5 @@
 import { Moment } from 'moment';
+import SpotifyWebApi from 'spotify-web-api-node';
 
 export type SpotifyCredentials = {
   accessToken: string;
@@ -16,9 +17,13 @@ export type Playlist = {
   spotifyId: string;
 };
 
-export type User = {
+export type DbUser = {
   credentials: SpotifyCredentials;
   displayName: string;
   playlists: Playlist[];
   spotifyId: string;
+};
+
+export type User = DbUser & {
+  spotifyApi: SpotifyWebApi;
 };

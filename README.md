@@ -2,8 +2,6 @@
 
 ## todo
 
-- error handling
-- bind spotifyApi on user object
 - set up db
 - create db script + executable
 - db api

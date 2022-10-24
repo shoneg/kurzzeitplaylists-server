@@ -19,6 +19,7 @@ export const strategy = new SpotifyStrategy(
         credentials: { accessToken, refreshToken, expiresAt: moment().add(expires_in, 's') },
         displayName: profile.displayName,
         playlists: [],
+        spotifyApi: getSpotifyWebApi(accessToken, refreshToken),
         spotifyId: profile.id,
       };
       return done(null, user);
@@ -26,8 +27,12 @@ export const strategy = new SpotifyStrategy(
   }
 );
 
-export const spotify = new SpotifyWebApi({
-  clientId: CLIENT_ID,
-  clientSecret: CLIENT_SECRET,
-  redirectUri,
-});
+export const getSpotifyWebApi = (accessToken: string, refreshToken: string) => {
+  const api = new SpotifyWebApi({
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    redirectUri,
+  });
+  api.setCredentials({ accessToken, refreshToken });
+  return api;
+};
