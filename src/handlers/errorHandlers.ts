@@ -9,7 +9,6 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
 };
 
 export const spotifyErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  logger.forceLog(err);
   if (!(err.message as string).includes("Spotify's Web API")) {
     next(err);
   } else {

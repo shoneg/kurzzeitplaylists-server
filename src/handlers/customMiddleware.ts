@@ -6,7 +6,6 @@ const logger = new Logger(DEBUG.WARN, 'customMiddleware');
 
 export const ensureAuthenticated: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated()) {
-    (req.user as User).spotifyApi.setAccessToken((req.user as User).credentials.accessToken);
     return next();
   }
   res.redirect('/');

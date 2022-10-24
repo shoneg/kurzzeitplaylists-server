@@ -17,13 +17,9 @@ export type Playlist = {
   spotifyId: string;
 };
 
-export type DbUser = {
+export type User = {
   credentials: SpotifyCredentials;
   displayName: string;
   playlists: Playlist[];
   spotifyId: string;
-};
-
-export type User = DbUser & {
-  spotifyApi: SpotifyWebApi;
 };
