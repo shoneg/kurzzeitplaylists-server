@@ -1,8 +1,10 @@
 import session from 'express-session';
+import moment from 'moment';
 import passport from 'passport';
 import { app } from '..';
-import { SESSION_SECRET } from './config';
+import { SECURE_COOKIES_ONLY, SESSION_SECRET, SESSION_TIMEOUT } from './config';
 import { strategy } from './createSpotifyApi';
+import { DB } from './db';
 import Logger, { DEBUG } from './utils/logger';
 
 const debug = DEBUG.WARN;
@@ -17,7 +19,23 @@ export const initPassport: () => void = () => {
 
   passport.use(strategy);
 
-  app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: true, cookie: { sameSite: 'lax' } }));
+  const dbSessionStore = DB.getInstance().getSessionStore();
+  app.use(
+    session({
+      cookie: {
+        sameSite: 'lax',
+        httpOnly: true,
+        maxAge: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
+        secure: SECURE_COOKIES_ONLY,
+      },
+      name: 'sid',
+      resave: false,
+      saveUninitialized: true,
+      secret: SESSION_SECRET,
+      store: dbSessionStore,
+      unset: 'destroy',
+    })
+  );
 
   app.use(passport.initialize());
   app.use(passport.session());

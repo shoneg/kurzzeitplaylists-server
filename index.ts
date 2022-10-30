@@ -4,7 +4,6 @@ import { initPassport } from './src/passport';
 import consolidate from 'consolidate';
 import express from 'express';
 import Logger, { DEBUG } from './src/utils/logger';
-import moment from 'moment';
 import rootRouter from './src/handlers';
 import { DB } from './src/db';
 import { QueryError } from 'mysql2';
@@ -19,13 +18,6 @@ const db = DB.getInstance();
 db.crateDbIfNotExist()
   .then(() => {
     logger.info('db creation done');
-    db.testConnection().then((suc) => {
-      if (suc) {
-        logger.info('db connection test was successful');
-      } else {
-        logger.error("db connection test wasn't successful");
-      }
-    });
   })
   .catch((err: QueryError) => {
     if (err.fatal) {
@@ -35,6 +27,13 @@ db.crateDbIfNotExist()
       logger.warn(`Got error (${err.name}) while creating db:`, err.message);
     }
   });
+db.testConnection().then((suc) => {
+  if (suc) {
+    logger.info('db connection test was successful');
+  } else {
+    logger.error("db connection test wasn't successful");
+  }
+});
 
 // configure Express
 app.set('views', __dirname + '/src/views');

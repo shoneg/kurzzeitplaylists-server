@@ -1,15 +1,20 @@
-import { Pool as PromisePool } from 'mysql2/promise';
 import { readFile } from 'fs';
+import { Store } from 'express-session';
+import moment from 'moment';
 import mysql, { Pool } from 'mysql2/promise';
+import MySQLSession from 'express-mysql-session';
 
-import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER } from '../config';
+import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, SESSION_TIMEOUT } from '../config';
 
 import Logger, { DEBUG } from '../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/db');
 
+const MySQLStore = MySQLSession(require('express-session'));
+
 export class DB {
   private static instance: DB;
+  private static sessionStore?: Store;
   private pool: Pool;
   private constructor() {
     this.pool = mysql.createPool({
@@ -51,5 +56,19 @@ export class DB {
         res();
       });
     });
+  }
+
+  public getSessionStore(): Store {
+    if (!DB.sessionStore) {
+      DB.sessionStore = new MySQLStore(
+        {
+          checkExpirationInterval: moment.duration(60, 's').asMilliseconds(),
+          expiration: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
+        },
+        this.pool,
+        (err) => logger.error('Got error while init of sessionStore:', err)
+      );
+    }
+    return DB.sessionStore;
   }
 }

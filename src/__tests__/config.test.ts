@@ -8,7 +8,9 @@ import {
   DB_USER,
   HOST,
   PORT,
+  SECURE_COOKIES_ONLY,
   SESSION_SECRET,
+  SESSION_TIMEOUT,
 } from '../config';
 
 test('all env variables should be initialized', () => {
@@ -21,5 +23,7 @@ test('all env variables should be initialized', () => {
   expect(DB_PORT).toBeDefined();
   expect(HOST).toBeDefined();
   expect(PORT).toBeDefined();
+  expect(SECURE_COOKIES_ONLY).toBeDefined();
   expect(SESSION_SECRET).toBeDefined();
+  expect(SESSION_TIMEOUT).toBeDefined();
 });
