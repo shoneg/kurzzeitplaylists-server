@@ -1,5 +1,4 @@
 import { Moment } from 'moment';
-import SpotifyWebApi from 'spotify-web-api-node';
 
 export type SpotifyCredentials = {
   accessToken: string;

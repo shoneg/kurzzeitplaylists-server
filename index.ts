@@ -6,12 +6,35 @@ import express from 'express';
 import Logger, { DEBUG } from './src/utils/logger';
 import moment from 'moment';
 import rootRouter from './src/handlers';
-import { refreshAllSessions } from './src/db';
+import { DB } from './src/db';
+import { QueryError } from 'mysql2';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
 // Initialize the express engine
 export const app: express.Application = express();
+
+// init db
+const db = DB.getInstance();
+db.crateDbIfNotExist()
+  .then(() => {
+    logger.info('db creation done');
+    db.testConnection().then((suc) => {
+      if (suc) {
+        logger.info('db connection test was successful');
+      } else {
+        logger.error("db connection test wasn't successful");
+      }
+    });
+  })
+  .catch((err: QueryError) => {
+    if (err.fatal) {
+      logger.error('Got fatal error while creating db:', err.message);
+      throw Error(err.name + '\n' + err.stack);
+    } else {
+      logger.warn(`Got error (${err.name}) while creating db:`, err.message);
+    }
+  });
 
 // configure Express
 app.set('views', __dirname + '/src/views');
@@ -31,4 +54,4 @@ app.listen(PORT, 'localhost', 100, () => {
 });
 
 // refresh tokens of all users
-setInterval(refreshAllSessions, moment.duration(60, 's').asMilliseconds());
+// setInterval(refreshAllSessions, moment.duration(60, 's').asMilliseconds());
