@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS user(
     accessToken CHAR(240) NOT NULL,
     displayName VARCHAR(100) NOT NULL,
-    expiresAt DATE NOT NULL,
+    expiresAt DATETIME NOT NULL,
     refreshToken CHAR(131) NOT NULL,
     spotifyId CHAR(25) NOT NULL,
     PRIMARY KEY(spotifyId)
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS playlist(
     maxTracks INT,
     name VARCHAR(100),
     numberOfTracks INT NOT NULL CHECK(numberOfTracks >= 0),
-    oldestTrack DATE NOT NULL,
+    oldestTrack DATETIME NOT NULL,
     owner CHAR(25) NOT NULL,
     spotifyId CHAR(25) NOT NULL,
     PRIMARY KEY(spotifyId),

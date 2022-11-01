@@ -10,7 +10,7 @@
       <a href="/auth/logout">Delete Account</a>
     </p>
     <ul>
-        {% for playlist in user.playlists %}
+        {% for playlist in playlists %}
         <li><a href=/playlists/{{playlist.id}} >{{ playlist.name }}</a></li>
         {% else %}
         Seems like you don't have any playlist…

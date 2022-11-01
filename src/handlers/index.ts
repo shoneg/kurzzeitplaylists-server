@@ -3,7 +3,7 @@ import { falsePathErrorView } from './service';
 import { Router } from 'express';
 import authRouter from './auth';
 import playlistRouter from './playlists';
-import { spotifyErrorHandler } from './errorHandlers';
+import { authErrorHandler, spotifyErrorHandler } from './errorHandlers';
 
 const rootRouter = Router();
 
@@ -20,6 +20,7 @@ rootRouter.get('/', (req, res) => {
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/playlists', ensureAuthenticated, playlistRouter);
 rootRouter.all('*', falsePathErrorView);
+rootRouter.use(authErrorHandler)
 rootRouter.use(spotifyErrorHandler);
 
 export default rootRouter;

@@ -3,6 +3,7 @@ import { Strategy as SpotifyStrategy } from 'passport-spotify';
 import { User } from './types';
 import moment from 'moment';
 import SpotifyWebApi from 'spotify-web-api-node';
+import { DB } from './db';
 
 const authCallbackPath = Object.freeze('/auth/callback');
 const redirectUri = Object.freeze(`http://${HOST}:${PORT}${authCallbackPath}`);
@@ -14,14 +15,24 @@ export const strategy = new SpotifyStrategy(
     callbackURL: redirectUri,
   },
   function (accessToken, refreshToken, expires_in, profile, done) {
+    const db = DB.getInstance();
     process.nextTick(() => {
-      const user: User = {
-        credentials: { accessToken, refreshToken, expiresAt: moment().add(expires_in, 's') },
-        displayName: profile.displayName,
-        playlists: [],
-        spotifyId: profile.id,
-      };
-      return done(null, user);
+      db.isUser(profile.id).then((isUser) => {
+        if (isUser) {
+          db.getUser(profile.id)
+            .then((user) => done(null, user))
+            .catch(() => done(new Error('login failed')));
+        } else {
+          const user: User = {
+            credentials: { accessToken, refreshToken, expiresAt: moment().add(expires_in, 's') },
+            displayName: profile.displayName,
+            spotifyId: profile.id,
+          };
+          db.addUser(user)
+            .then(() => done(null, user))
+            .catch(() => done(new Error('registration failed')));
+        }
+      });
     });
   }
 );

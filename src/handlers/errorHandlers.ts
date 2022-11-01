@@ -8,6 +8,18 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   res.status(500).send('Internal server error');
 };
 
+export const authErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  if (!((err.message as string).includes('login failed') || (err.message as string).includes('registration failed'))) {
+    next(err);
+  }
+  logger.info('Spotify login failed for any reason:', err);
+  if ((err.message as string).includes('login failed')) {
+    res.status(401).send('Login failed');
+  } else {
+    res.status(401).send('Registration failed');
+  }
+};
+
 export const spotifyErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (!(err.message as string).includes("Spotify's Web API")) {
     next(err);

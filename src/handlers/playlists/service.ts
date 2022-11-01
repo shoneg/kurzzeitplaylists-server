@@ -6,7 +6,7 @@ import Logger, { DEBUG } from '../../utils/logger';
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
 export const playlistsView: RequestHandler = (req, res) => {
-  res.render('playlists.html', { user: req.user });
+  res.render('playlists.html', { user: req.user, playlists: [] });
 };
 
 export const editPlaylistView: RequestHandler = (req, res, next) => {

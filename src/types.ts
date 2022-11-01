@@ -13,12 +13,12 @@ export type Playlist = {
   name: string;
   numberOfTracks: number;
   oldestTrack: Moment;
+  ownerId: string;
   spotifyId: string;
 };
 
 export type User = {
   credentials: SpotifyCredentials;
   displayName: string;
-  playlists: Playlist[];
   spotifyId: string;
 };
