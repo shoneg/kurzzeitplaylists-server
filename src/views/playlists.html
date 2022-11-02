@@ -3,15 +3,19 @@
     <title>Kurzzeitplaylists</title>
 </head>
 <body>
+    {% if recognizeRes %}
+    <script>alert("We detected {{ recognizeRes.newPlaylists }} new playlists\nand\ndeleted {{ recognizeRes.deletedPlaylists }} not anymore existing playlists.", )</script>
+    {% endif %}
     {% if user %}
+    <p>Hello {{ user.displayName }}</p>
     <p>
-      <a onclick="fetch('/playlists/recognize')">Recognize Playlists</a> |
+      <a href="/playlists/recognize">Recognize Playlists</a> |
       <a href="/auth/logout">Log Out</a> |
       <a href="/auth/logout">Delete Account</a>
     </p>
     <ul>
         {% for playlist in playlists %}
-        <li><a href=/playlists/{{playlist.id}} >{{ playlist.name }}</a></li>
+        <li><a href=/playlists/{{playlist.spotifyId}} >{{ playlist.name }}</a></li>
         {% else %}
         Seems like you don't have any playlist…
         {% endfor %}

@@ -1,14 +1,15 @@
 import { readFile } from 'fs';
 import { Store } from 'express-session';
 import moment from 'moment';
-import mysql, { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import mysql, { FieldPacket, OkPacket, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import MySQLSession from 'express-mysql-session';
 
 import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, SESSION_TIMEOUT } from '../config';
 
 import Logger, { DEBUG } from '../utils/logger';
-import { SpotifyCredentials, User } from '../types';
-import { DBUser } from './types';
+import { Playlist, User } from '../types';
+import { DBPlaylist, DBUser } from './types';
+import { dbPlaylists2Playlist, dbUser2User } from './converter';
 
 const logger = new Logger(DEBUG.WARN, '/db');
 
@@ -34,6 +35,13 @@ export class DB {
 
   public static getInstance(): DB {
     return DB.instance;
+  }
+
+  public query<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader>(
+    sql: string,
+    values: any | any[] | { [param: string]: any }
+  ): Promise<[T, FieldPacket[]]> {
+    return this.pool.query<T>(sql, values);
   }
 
   public testConnection(): Promise<boolean> {
@@ -74,9 +82,92 @@ export class DB {
     return DB.sessionStore;
   }
 
-  //* --------------------------
-  //* |         user           |
-  //* --------------------------
+  //* ----------------------------
+  //* |         playlists        |
+  //* ----------------------------
+
+  public getPlaylistsOfUser(user: User | string): Promise<Playlist[]> {
+    let userId: string;
+    if (typeof user === 'string') {
+      userId = user;
+    } else {
+      userId = user.spotifyId;
+    }
+
+    return new Promise<Playlist[]>((res, rej) => {
+      this.pool
+        .query<RowDataPacket[]>('SELECT * FROM playlist WHERE owner = ?', [userId])
+        .then((result) => {
+          const dbPlaylists = result[0] as DBPlaylist[];
+          const playlists = dbPlaylists.map(dbPlaylists2Playlist);
+          res(playlists);
+        })
+        .catch((err) => {
+          logger.error(`Got an unexpected error while getting playlists of user with id='${userId}':`, err);
+          rej('Cannot get playlists');
+        });
+    });
+  }
+
+  /**
+   * @returns number of added rows
+   */
+  public insertPlaylists(playlists: Playlist[]): Promise<number> {
+    let insertQuery = `
+    INSERT INTO playlist (
+      name,
+      numberOfTracks,
+      oldestTrack,
+      owner,
+      spotifyId
+    )
+    VALUES `;
+    let insertValues: (number | string | Date | null)[] = [];
+    playlists.forEach((p) => {
+      const { name, numberOfTracks, oldestTrack, ownerId, spotifyId } = p;
+      insertQuery += ' (?, ?, ?, ?, ? ),';
+      insertValues.push(name, numberOfTracks, oldestTrack.toDate(), ownerId, spotifyId);
+    });
+    insertQuery = insertQuery.substring(0, insertQuery.length - 1);
+    return new Promise<number>((res, rej) => {
+      this.pool
+        .query<ResultSetHeader>(insertQuery, insertValues)
+        .then((insertResult) => {
+          res(insertResult[0].affectedRows);
+        })
+        .catch((err) => {
+          logger.error('While inserting playlists we got an unexpected error:', err);
+          rej(err);
+        });
+    });
+  }
+
+  /**
+   * @returns number of deleted rows
+   */
+  public deletePlaylists(playlists: Playlist[]): Promise<number> {
+    return new Promise<number>((res, rej) => {
+      let deleteQuery = 'DELETE FROM playlist WHERE spotifyId IN (';
+      for (let i = 0; i < playlists.length; i++) {
+        deleteQuery += '?, ';
+      }
+      deleteQuery = deleteQuery.substring(0, deleteQuery.length - 2) + ')';
+      const deleteIds = playlists.map((p) => p.spotifyId);
+      this.pool
+        .query<ResultSetHeader>(deleteQuery, deleteIds)
+        .then((deleteResult) => {
+          res(deleteResult[0].affectedRows);
+        })
+        .catch((err) => {
+          logger.error('While deleting playlists we got an unexpected error:', err);
+          rej(err);
+        });
+    });
+  }
+
+  //* ----------------------------
+  //* |           user           |
+  //* ----------------------------
 
   public addUser(user: User): Promise<void> {
     const { credentials, displayName, spotifyId } = user;
@@ -98,12 +189,13 @@ export class DB {
         .then((result) => {
           if (result[0].affectedRows === 1) {
             res();
+          } else {
+            logger.warn(`unexpectedly ${result[0].affectedRows} where inserted into user instead of 1.`);
+            res();
           }
-          logger.warn(`unexpectedly ${result[0].affectedRows} where inserted into user instead of 1.`);
-          res();
         })
         .catch((err) => {
-          logger.error('Got Error while inserting user:', err);
+          logger.error('Got error while inserting user:', err);
           rej();
         });
     });
@@ -114,10 +206,8 @@ export class DB {
       this.pool
         .query<RowDataPacket[]>('SELECT * FROM user WHERE spotifyId = ? LIMIT 1', [id])
         .then((result) => {
-          const dbUser = result[0][0];
-          const { accessToken, refreshToken, expiresAt, displayName, spotifyId } = dbUser as DBUser;
-          const credentials: SpotifyCredentials = { accessToken, refreshToken, expiresAt: moment(expiresAt) };
-          const user: User = { credentials, displayName, spotifyId };
+          const dbUser = result[0][0] as DBUser;
+          const user = dbUser2User(dbUser);
           res(user);
         })
         .catch((err) => {

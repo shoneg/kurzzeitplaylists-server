@@ -7,7 +7,7 @@ export type SpotifyCredentials = {
 };
 
 export type Playlist = {
-  discardPlaylist?: Playlist;
+  discardPlaylist?: string;
   maxTrackAge?: number;
   maxTracks?: number;
   name: string;
