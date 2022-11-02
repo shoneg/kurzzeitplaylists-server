@@ -60,7 +60,7 @@
   "codemetrics.basics.ComplexityLevelHighDescription": "You should refactor something",
   "codemetrics.basics.ComplexityLevelExtremeDescription": "Much too high",
   "codemetrics.basics.ComplexityLevelExtreme": 30,
-  "cSpell.words": ["Kurzzeitplaylists"],
+  "cSpell.words": ["kurzplaylistserver", "Kurzzeitplaylists", "resave"],
   "sqltools.connections": [
     {
       "mysqlOptions": {
