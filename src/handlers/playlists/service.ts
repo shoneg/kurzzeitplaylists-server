@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+import moment from 'moment';
 import { playlistObjectSimplified2Playlist } from '../../converter';
 import { getSpotify } from '../../createSpotifyApi';
 import { DB } from '../../db';
@@ -65,9 +66,22 @@ export const playlistsView: RequestHandler = (req, res, next) => {
 
 export const editPlaylistView: RequestHandler = (req, res, next) => {
   const { id } = req.params;
+  /*
+  - bei Anzeige laden oldesttrack setzen
+  - nach löschen oldesttrack neu setzen (nur falls es ein maxAge gibt)
+  - sonst nie oldesttrack setzen
+  - an diesen Stellen auch numberOfTracks setzen
+  - bei Anzeige auch name aktualisieren
+  */
   getSpotify(req.user as User)
-    .getPlaylist(id)
-    .then((data) => res.send(data))
+    .getPlaylist(id, { fields: 'id,name,tracks(total,items(added_at,id),next)' })
+    .then((data) =>
+      res.render('edit.html', {
+        name: data.body.name,
+        oldestTrack: { date: moment().format('DD.MM.YY'), duration: 0 },
+        numberOfTracks: data.body.tracks.total,
+      })
+    )
     .catch(next);
 };
 

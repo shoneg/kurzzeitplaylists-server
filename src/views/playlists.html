@@ -4,7 +4,7 @@
 </head>
 <body>
     {% if recognizeRes %}
-    <script>alert("We detected {{ recognizeRes.newPlaylists }} new playlists\nand\ndeleted {{ recognizeRes.deletedPlaylists }} not anymore existing playlists.", )</script>
+    <script>alert("We've detected {{ recognizeRes.newPlaylists }} new playlists\nand\ndeleted {{ recognizeRes.deletedPlaylists }} not anymore existing playlists.", )</script>
     {% endif %}
     {% if user %}
     <p>Hello {{ user.displayName }}</p>

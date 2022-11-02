@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<head>
+  <title>Kurzzeitplaylists</title>
+</head>
+<body>
+  <h1>{{ name }}</h1>
+  <p>
+    Oldest Track: {{ oldestTrack.date }} ({{ oldestTrack.duration }} days)
+    </br>
+    Number of Tracks: {{ numberOfTracks }}
+  </p>
+  <form>
+    <label for="maxAge">Maximal age of tracks (in days):</label><br>
+    <input type="number" id="maxAge" name="maxAge"><br>
+    <label for="maxTracks">Maximal tracks in playlist:</label><br>
+    <input type="number" id="maxTracks" name="maxTracks"><br><br>
+    <input type="submit" value="Save">
+  </form>
+  <hr>
+  <a href="/">Go back to home page</a>
+</body>

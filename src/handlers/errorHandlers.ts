@@ -26,7 +26,15 @@ export const spotifyErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   } else {
     logger.warn('Got Spotify Error:', err);
     if (err?.body?.error && err.body.error.status && err.body.error.message) {
-      res.status(err.body.error.status).send(err.body.error.message);
+      if (err.body.error.status === 404) {
+        res
+          .status(404)
+          .send(
+            "Spotify couldn't find this playlist. Maybe it doesn't exist anymore… Try to <a href='/playlists/recognize'>recognize</a> playlist to show only your current existing playlists."
+          );
+      } else {
+        res.status(err.body.error.status).send(err.body.error.message);
+      }
     } else {
       logger.error('Got Spotify Error with unknown format');
       res.status(500).send('There was an unknown error.');
