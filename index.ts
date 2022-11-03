@@ -5,7 +5,7 @@ import consolidate from 'consolidate';
 import express from 'express';
 import Logger, { DEBUG } from './src/utils/logger';
 import rootRouter from './src/handlers';
-import { DB } from './src/db';
+import DB from './src/db';
 import { QueryError } from 'mysql2';
 import moment from 'moment';
 import { refreshAllSessions } from './src/spotifyApi';

@@ -1,9 +1,9 @@
 import { CLIENT_ID, CLIENT_SECRET, HOST, PORT } from './config';
 import { Strategy as SpotifyStrategy } from 'passport-spotify';
-import { SpotifyCredentials, User } from './types';
+import { User } from './types';
 import moment from 'moment';
 import SpotifyWebApi from 'spotify-web-api-node';
-import { DB } from './db';
+import DB from './db';
 import Logger, { DEBUG } from './utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/spotifyApi');
@@ -20,24 +20,25 @@ export const strategy = new SpotifyStrategy(
   function (accessToken, refreshToken, expires_in, profile, done) {
     const db = DB.getInstance();
     process.nextTick(() => {
-      db.isUser(profile.id)
+      db.user
+        .exist(profile.id)
         .then((isUser) => {
           if (isUser) {
             const loadedUser = isUser;
             if (loadedUser.credentials.expiresAt.isBefore(moment().add(30, 's'))) {
-              refreshCredentials(loadedUser)
+              loadedUser
+                .refreshCredentials()
                 .then((updatedUser) => done(null, updatedUser))
                 .catch(done);
             } else {
               done(null, isUser);
             }
           } else {
-            const user: User = {
-              credentials: { accessToken, refreshToken, expiresAt: moment().add(expires_in, 's') },
-              displayName: profile.displayName,
-              spotifyId: profile.id,
-            };
-            db.addUser(user)
+            const { displayName, id } = profile;
+            const expiresAt = moment().add(expires_in, 's');
+            const user: User = new User([accessToken, expiresAt, refreshToken], displayName, id);
+            db.user
+              .insert(user)
               .then(() => done(null, user))
               .catch(() => done(new Error('registration failed')));
           }
@@ -56,34 +57,12 @@ export const getSpotify = (arg: { accessToken: string; refreshToken: string } | 
     refreshToken: (arg as User).credentials?.refreshToken || (arg as { refreshToken: string }).refreshToken,
   });
 
-export const refreshCredentials = (user: User): Promise<User> => {
-  const db = DB.getInstance();
-  return new Promise<User>((res, rej) => {
-    getSpotify(user)
-      .refreshAccessToken()
-      .then((refreshResult) => {
-        const { access_token: accessToken, refresh_token, expires_in } = refreshResult.body;
-        logger.forceLog(expires_in);
-        const newCredentials: SpotifyCredentials = {
-          accessToken,
-          refreshToken: refresh_token || user.credentials.refreshToken,
-          expiresAt: moment().add(expires_in, 's'),
-        };
-        db.updateUser({ spotifyId: user.spotifyId, credentials: newCredentials }).then(res).catch(rej);
-      })
-      .catch((err) => {
-        logger.error(`While refreshing access token of user with id='${user.spotifyId}', we got an error:`, err);
-        rej(err);
-      });
-  });
-};
-
 export const refreshAllSessions = (expireBefore = moment()): Promise<void> => {
   const db = DB.getInstance();
   return new Promise<void>((res, rej) => {
-    db.getUsersExpiresBefore(expireBefore)
+    db.user.getAllExpiresBefore(expireBefore)
       .then((users) => {
-        const refreshPromises = users.map((u) => refreshCredentials(u));
+        const refreshPromises = users.map((u) => u.refreshCredentials());
         Promise.all(refreshPromises)
           .then(() => {
             logger.info(

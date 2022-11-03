@@ -4,7 +4,7 @@ import passport from 'passport';
 import { app } from '..';
 import { SECURE_COOKIES_ONLY, SESSION_SECRET, SESSION_TIMEOUT } from './config';
 import { strategy } from './spotifyApi';
-import { DB } from './db';
+import DB from './db';
 import Logger, { DEBUG } from './utils/logger';
 
 const debug = DEBUG.WARN;

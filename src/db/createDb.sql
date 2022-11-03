@@ -1,10 +1,15 @@
-CREATE TABLE IF NOT EXISTS user(
+CREATE TABLE IF NOT EXISTS credentials(
     accessToken VARCHAR(500) NOT NULL,
-    displayName VARCHAR(100) NOT NULL,
     expiresAt DATETIME NOT NULL,
     refreshToken VARCHAR(300) NOT NULL,
+    userId CHAR(25) NOT NULL,
+    PRIMARY KEY(userId)
+);
+CREATE TABLE IF NOT EXISTS user(
+    displayName VARCHAR(100) NOT NULL,
     spotifyId CHAR(25) NOT NULL,
-    PRIMARY KEY(spotifyId)
+    PRIMARY KEY(spotifyId),
+    CONSTRAINT fkCredentials FOREIGN KEY(spotifyId) REFERENCES credentials(userId) On DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE TABLE IF NOT EXISTS playlist(
     discardPlaylist CHAR(25),
