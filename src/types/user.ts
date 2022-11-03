@@ -36,7 +36,7 @@ class User {
     if (credentials instanceof SpotifyCredentials) {
       this._credentials = credentials;
     } else {
-      this._credentials = new SpotifyCredentials(credentials[0], credentials[1], credentials[2]);
+      this._credentials = new SpotifyCredentials(credentials[0], credentials[1], credentials[2], credentials[3]);
     }
     this._displayName = displayName;
     this._spotifyId = spotifyId;
@@ -50,7 +50,7 @@ class User {
       _spotifyId: string;
     };
     const { _accessToken, _expiresAt, _refreshToken } = _credentials;
-    const user = new User([_accessToken, _expiresAt, _refreshToken], _displayName, _spotifyId);
+    const user = new User([_accessToken, _expiresAt, _refreshToken, _spotifyId], _displayName, _spotifyId);
     return user;
   }
 
@@ -58,21 +58,10 @@ class User {
   public refreshCredentials(): Promise<User> {
     const db = DB.getInstance();
     return new Promise<User>((res, rej) => {
-      getSpotify(this._credentials)
-        .refreshAccessToken()
-        .then((refreshResult) => {
-          const { access_token: accessToken, refresh_token: refreshToken, expires_in } = refreshResult.body;
-          const newCredentials = this._credentials.update({
-            accessToken,
-            refreshToken,
-            expiresAt: moment().add(expires_in, 's'),
-          });
-          db.user.update({ spotifyId: this._spotifyId, credentials: newCredentials }).then(res).catch(rej);
-        })
-        .catch((err) => {
-          logger.error(`While refreshing access token of user with id='${this._spotifyId}', we got an error:`, err);
-          rej(err);
-        });
+      this._credentials
+        .refresh()
+        .then(() => db.user.get(this._spotifyId).then(res).catch(rej))
+        .catch(rej);
     });
   }
 }

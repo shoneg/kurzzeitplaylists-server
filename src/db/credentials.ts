@@ -1,3 +1,4 @@
+import { Moment } from 'moment';
 import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import DB from '.';
 import { SpotifyCredentials } from '../types';
@@ -14,8 +15,8 @@ class Credentials {
   }
 
   static model2Credentials(credentials: CredentialsModel): SpotifyCredentials {
-    const { accessToken, expiresAt, refreshToken } = credentials;
-    const ret = new SpotifyCredentials(accessToken, expiresAt, refreshToken);
+    const { accessToken, expiresAt, refreshToken, spotifyId } = credentials;
+    const ret = new SpotifyCredentials(accessToken, expiresAt, refreshToken, spotifyId);
     return ret;
   }
 
@@ -38,6 +39,22 @@ class Credentials {
         .catch((err) => {
           logger.error('Got an unexpected error while looking for credentials:', err);
           rej('Got error while querying');
+        });
+    });
+  }
+
+  getAllExpiresBefore(expiresBefore: Moment): Promise<SpotifyCredentials[]> {
+    return new Promise<SpotifyCredentials[]>((res, rej) => {
+      this.pool
+        .query<RowDataPacket[]>('SELECT * FROM credentials WHERE expiresAt < ?', [expiresBefore.toDate()])
+        .then((queryResult) => {
+          const dbCredentials = queryResult[0] as CredentialsModel[];
+          const credentialPromises = dbCredentials.map(Credentials.model2Credentials);
+          Promise.all(credentialPromises).then(res).catch(rej);
+        })
+        .catch((err) => {
+          logger.error('Got an unexpected error while getting credentials:', err);
+          rej('Error while querying credentials');
         });
     });
   }

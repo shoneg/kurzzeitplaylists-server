@@ -36,7 +36,7 @@ export const strategy = new SpotifyStrategy(
           } else {
             const { displayName, id } = profile;
             const expiresAt = moment().add(expires_in, 's');
-            const user: User = new User([accessToken, expiresAt, refreshToken], displayName, id);
+            const user: User = new User([accessToken, expiresAt, refreshToken, id], displayName, id);
             db.user
               .insert(user)
               .then(() => done(null, user))
@@ -60,9 +60,10 @@ export const getSpotify = (arg: { accessToken: string; refreshToken: string } | 
 export const refreshAllSessions = (expireBefore = moment()): Promise<void> => {
   const db = DB.getInstance();
   return new Promise<void>((res, rej) => {
-    db.user.getAllExpiresBefore(expireBefore)
-      .then((users) => {
-        const refreshPromises = users.map((u) => u.refreshCredentials());
+    db.credentials
+      .getAllExpiresBefore(expireBefore)
+      .then((credentials) => {
+        const refreshPromises = credentials.map((c) => c.refresh());
         Promise.all(refreshPromises)
           .then(() => {
             logger.info(

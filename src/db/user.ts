@@ -1,4 +1,3 @@
-import { Moment } from 'moment';
 import { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import DB from '.';
 import { User as AppUser, Playlist as AppPlaylist } from '../types';
@@ -98,22 +97,6 @@ class User {
         .catch((err) => {
           logger.error(`Got an unexpected error while getting user with id='${id}':`, err);
           rej('Error while querying user');
-        });
-    });
-  }
-
-  getAllExpiresBefore(expiresBefore: Moment): Promise<AppUser[]> {
-    return new Promise<AppUser[]>((res, rej) => {
-      this.pool
-        .query<RowDataPacket[]>('SELECT * FROM user WHERE expiresAt < ?', [expiresBefore.toDate()])
-        .then((queryResult) => {
-          const dbUsers = queryResult[0] as UserModel[];
-          const userPromises = dbUsers.map(User.model2User);
-          Promise.all(userPromises).then(res).catch(rej);
-        })
-        .catch((err) => {
-          logger.error('Got an unexpected error while getting users:', err);
-          rej('Error while querying users');
         });
     });
   }
