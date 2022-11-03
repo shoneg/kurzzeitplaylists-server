@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import moment from 'moment';
 import { playlistObjectSimplified2Playlist } from '../../converter';
-import { getSpotify } from '../../createSpotifyApi';
+import { getSpotify } from '../../spotifyApi';
 import { DB } from '../../db';
 import { filterUnknownPlaylists, getPlaylists } from '../../db/service';
 import { User } from '../../types';

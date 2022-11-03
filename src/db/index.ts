@@ -1,6 +1,6 @@
 import { readFile } from 'fs';
 import { Store } from 'express-session';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import mysql, { FieldPacket, OkPacket, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import MySQLSession from 'express-mysql-session';
 
@@ -217,17 +217,35 @@ export class DB {
     });
   }
 
-  public isUser(id: string): Promise<boolean> {
-    return new Promise<boolean>((res) =>
+  public getUsersExpiresBefore(expiresBefore: Moment): Promise<User[]> {
+    return new Promise<User[]>((res, rej) => {
       this.pool
-        .query<RowDataPacket[]>('SELECT COUNT(spotifyId) FROM user WHERE spotifyId = ?', [id])
+        .query<RowDataPacket[]>('SELECT * FROM user WHERE expiresAt < ?', [expiresBefore.toDate()])
+        .then((queryResult) => {
+          const dbUsers = queryResult[0] as DBUser[];
+          const users = dbUsers.map(dbUser2User);
+          res(users);
+        })
+        .catch((err) => {
+          logger.error('Got an unexpected error while getting users:', err);
+          rej('Error while querying users');
+        });
+    });
+  }
+
+  public isUser(id: string): Promise<User | false> {
+    return new Promise<User | false>((res) =>
+      this.pool
+        .query<RowDataPacket[]>('SELECT * FROM user WHERE spotifyId = ?', [id])
         .then((result) => {
-          const count = result[0][0]['COUNT(spotifyId)'] as number;
-          if (count === 1) {
-            res(true);
-          } else if (count > 1) {
-            logger.warn(`Seems like there's ${count} (more than 1) user with id '${id}'`);
-            res(true);
+          const count = result[0].length;
+          if (count >= 1) {
+            if (count > 1) {
+              logger.warn(`Seems like there's ${count} (more than 1) user with id '${id}'`);
+            }
+            const dbUser = result[0][0] as DBUser;
+            const user = dbUser2User(dbUser);
+            res(user);
           } else {
             res(false);
           }
@@ -237,5 +255,50 @@ export class DB {
           res(false);
         })
     );
+  }
+
+  public updateUser(user: Pick<User, 'spotifyId'> & Partial<Omit<User, 'spotifyId'>>): Promise<User> {
+    const { spotifyId, displayName, credentials } = user;
+    const { accessToken, expiresAt, refreshToken } = credentials || {};
+    if (displayName || accessToken || expiresAt || refreshToken) {
+      let query = 'UPDATE user SET ';
+      const values: (string | Date)[] = [];
+      (
+        [
+          { v: accessToken, n: 'accessToken' },
+          { v: expiresAt?.toDate(), n: 'expiresAt' },
+          { v: displayName, n: 'displayName' },
+          { v: refreshToken, n: 'refreshToken' },
+        ] as { v: string | Date; n: string }[]
+      ).forEach(({ v, n }) => {
+        if (v) {
+          query += n + ' = ?, ';
+          values.push(v);
+        }
+      });
+      query = query.substring(0, query.length - 2) + ' WHERE spotifyId = ?';
+      values.push(spotifyId);
+      return new Promise<User>((res, rej) => {
+        this.pool
+          .query<ResultSetHeader>(query, values)
+          .then((result) => {
+            const { affectedRows } = result[0];
+            if (affectedRows >= 1) {
+              if (affectedRows > 1) {
+                logger.error(
+                  `Seems like there's ${affectedRows} (more than 1) user with id '${spotifyId}', now all the false one have wrong credentials`
+                );
+              }
+              res(this.getUser(spotifyId));
+            }
+          })
+          .catch((err) => {
+            logger.error(`Unexpectedly we couldn't update user with id='${spotifyId}' and got error:`, err);
+            rej(`Couldn't update user, got an error`);
+          });
+      });
+    } else {
+      return this.getUser(spotifyId);
+    }
   }
 }

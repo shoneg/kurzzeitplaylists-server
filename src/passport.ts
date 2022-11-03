@@ -3,7 +3,7 @@ import moment from 'moment';
 import passport from 'passport';
 import { app } from '..';
 import { SECURE_COOKIES_ONLY, SESSION_SECRET, SESSION_TIMEOUT } from './config';
-import { strategy } from './createSpotifyApi';
+import { strategy } from './spotifyApi';
 import { DB } from './db';
 import Logger, { DEBUG } from './utils/logger';
 

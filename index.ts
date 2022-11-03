@@ -7,6 +7,8 @@ import Logger, { DEBUG } from './src/utils/logger';
 import rootRouter from './src/handlers';
 import { DB } from './src/db';
 import { QueryError } from 'mysql2';
+import moment from 'moment';
+import { refreshAllSessions } from './src/spotifyApi';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
@@ -53,4 +55,9 @@ app.listen(PORT, 'localhost', 100, () => {
 });
 
 // refresh tokens of all users
-// setInterval(refreshAllSessions, moment.duration(60, 's').asMilliseconds());
+setInterval(() => {
+  const expiresBefore = moment().subtract(6, 'h');
+  refreshAllSessions()
+    .then(() => {})
+    .catch(() => {});
+}, moment.duration(30, 'm').asMilliseconds());
