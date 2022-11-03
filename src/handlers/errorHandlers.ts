@@ -10,21 +10,23 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
 
 export const authErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const m = err.message as string;
-  if (!(m.includes('login failed') || m.includes('registration failed') || m.includes('TokenError'))) {
+  if (!m || !(m.includes('login failed') || m.includes('registration failed') || m.includes('TokenError'))) {
     next(err);
-  }
-  logger.info('Spotify login failed for any reason:', err);
-  if (m.includes('registration failed')) {
-    res.status(401).send('Registration failed');
-  } else if (m.includes('TokenError')) {
-    res.status(401).send("You're login is expired. Please <a href='/auth/logout'>logout</a> and then login again.");
   } else {
-    res.status(401).send('Login failed');
+    logger.info('Spotify login failed for any reason:', err);
+    if (m.includes('registration failed')) {
+      res.status(401).send('Registration failed');
+    } else if (m.includes('TokenError')) {
+      res.status(401).send("You're login is expired. Please <a href='/auth/logout'>logout</a> and then login again.");
+    } else {
+      res.status(401).send('Login failed');
+    }
   }
 };
 
 export const spotifyErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  if (!(err.message as string).includes("Spotify's Web API")) {
+  const m = err.message as string;
+  if (!m || m.includes("Spotify's Web API")) {
     next(err);
   } else {
     logger.warn('Got Spotify Error:', err);

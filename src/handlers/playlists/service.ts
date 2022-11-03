@@ -15,7 +15,8 @@ const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; d
       .then((spotifyPlaylists) => {
         const usersOwnPlaylists = spotifyPlaylists.filter((p) => p.owner.id === user.spotifyId);
         const insertPromise = new Promise<number>((res, rej) => {
-          db.playlist.filterUnknown(usersOwnPlaylists)
+          db.playlist
+            .filterUnknown(usersOwnPlaylists)
             .then((notYetInserted) => {
               if (notYetInserted.length === 0) {
                 res(0);
@@ -27,7 +28,8 @@ const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; d
             .catch(rej);
         });
         const deletePromise = new Promise<number>((res, rej) => {
-          db.user.getPlaylists(user)
+          db.user
+            .getPlaylists(user)
             .then((usersPlaylists) => {
               const spotifyListIds = usersOwnPlaylists.map((p) => p.id);
               const toDelete = usersPlaylists.filter((p) => !spotifyListIds.includes(p.spotifyId));
@@ -56,7 +58,8 @@ export const playlistsView: RequestHandler = (req, res, next) => {
     req.query.newOnes && req.query.deleted
       ? { newPlaylists: req.query.newOnes, deletedPlaylists: req.query.deleted }
       : undefined;
-  db.user.getPlaylists(user)
+  db.user
+    .getPlaylists(user)
     .then((playlists) => {
       res.render('playlists.html', { user, playlists, recognizeRes });
     })
@@ -65,21 +68,45 @@ export const playlistsView: RequestHandler = (req, res, next) => {
 
 export const editPlaylistView: RequestHandler = (req, res, next) => {
   const { id } = req.params;
-  /*
-  - bei Anzeige laden oldesttrack setzen
+  const user = User.fromExpress(req.user as Express.User);
+  const db = DB.getInstance();
+  db.playlist
+    .get(id)
+    .then((p) =>
+      p
+        .refresh(user.credentials, true)
+        .then((p) =>
+          res.render('edit.html', {
+            name: p.name,
+            oldestTrack: {
+              date: p.oldestTrack.format('DD.MM.YYYY'),
+              duration: moment().diff(p.oldestTrack, 'd'),
+            },
+            numberOfTracks: p.numberOfTracks,
+            maxAge: p.maxTrackAge ?? '',
+            maxTracks: p.maxTracks ?? '',
+          })
+        )
+        .catch(next)
+    )
+    .catch(next);
+};
+
+/*
   - nach löschen oldesttrack neu setzen (nur falls es ein maxAge gibt)
-  - sonst nie oldesttrack setzen
-  - an diesen Stellen auch numberOfTracks setzen
-  - bei Anzeige auch name aktualisieren
+  - an dieser Stelle auch numberOfTracks setzen
   */
-  getSpotify(User.fromExpress(req.user as Express.User))
-    .getPlaylist(id, { fields: 'id,name,tracks(total,items(added_at,id),next)' })
-    .then((data) =>
-      res.render('edit.html', {
-        name: data.body.name,
-        oldestTrack: { date: moment().format('DD.MM.YY'), duration: 0 },
-        numberOfTracks: data.body.tracks.total,
-      })
+export const submitEditPlaylist: RequestHandler = (req, res, next) => {
+  const { id } = req.params;
+  const { maxAge: maxTrackAge, maxTracks } = req.body;
+  const db = DB.getInstance();
+  db.playlist
+    .get(id)
+    .then((p) =>
+      db.playlist
+        .update({ spotifyId: id, maxTrackAge, maxTracks })
+        .then(() => res.redirect('/playlists'))
+        .catch(next)
     )
     .catch(next);
 };

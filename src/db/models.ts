@@ -2,7 +2,7 @@ export type CredentialsModel = {
   accessToken: string;
   expiresAt: Date;
   refreshToken: string;
-  spotifyId: string;
+  userId: string;
 };
 
 export type PlaylistModel = {

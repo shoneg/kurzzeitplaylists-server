@@ -1,7 +1,10 @@
 import moment from 'moment';
 import { Moment } from 'moment';
 import SpotifyWebApi from 'spotify-web-api-node';
+import DB from '../db';
+import { getSpotify } from '../spotifyApi';
 import Logger, { DEBUG } from '../utils/logger';
+import SpotifyCredentials from './spotifyCredentials';
 
 const logger = new Logger(DEBUG.WARN, '/types/playlist');
 
@@ -97,6 +100,39 @@ class Playlist {
   }
 
   //* static methods
+  private static getTracks = (
+    spotify: SpotifyWebApi,
+    id: string,
+    offset = 0,
+    limit = 50
+  ): Promise<SpotifyApi.PlaylistTrackObject[]> => {
+    return new Promise<SpotifyApi.PlaylistTrackObject[]>((res, rej) => {
+      spotify
+        .getPlaylistTracks(id, { offset, limit, fields: 'items(added_at),next' })
+        .then((result) => {
+          if (result.statusCode !== 200) {
+            const body = result.body as { error?: { status?: number; message?: string } | undefined };
+            rej(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
+          }
+          const nextURL = result.body.next;
+          if (nextURL) {
+            const nextOffset = new URL(nextURL).searchParams.get('offset');
+            const nextLimit = new URL(nextURL).searchParams.get('limit');
+            if (nextOffset && nextLimit) {
+              this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit))
+                .then((nextResult) => res(nextResult.concat(result.body.items)))
+                .catch(rej);
+            } else {
+              rej(`nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`);
+            }
+          } else {
+            res(result.body.items);
+          }
+        })
+        .catch(rej);
+    });
+  };
+
   public static fromApiObj(simplePlaylist: SpotifyApi.PlaylistObjectSimplified, oldestTrackValue = moment()): Playlist {
     const { name, tracks, owner, id } = simplePlaylist;
     const playlist = new Playlist({
@@ -110,38 +146,81 @@ class Playlist {
   }
 
   public static getMany = (
-    offset: number,
-    limit: number,
+    offset = 0,
+    limit = 50,
     spotify: SpotifyWebApi
   ): Promise<SpotifyApi.PlaylistObjectSimplified[]> => {
     return new Promise<SpotifyApi.PlaylistObjectSimplified[]>((res, rej) => {
-      spotify.getUserPlaylists({ offset, limit }).then((result) => {
-        if (result.statusCode !== 200) {
-          const body = result.body as { error?: { status?: number; message?: string } | undefined };
-          rej(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
-        }
-        const nextURL = result.body.next;
-        if (nextURL) {
-          const nextURLMatcher = nextURL.match(/playlists\?offset=(\d+)\&limit=(\d+)$/);
-          if (nextURLMatcher) {
-            const nextOffset = parseInt(nextURLMatcher[1]);
-            const nextLimit = parseInt(nextURLMatcher[2]);
-            this.getMany(nextOffset, nextLimit, spotify)
-              .then((nextResult) => res(nextResult.concat(result.body.items)))
-              .catch(rej);
-          } else {
-            rej(
-              `While parsing nextURL, we unexpectedly got a falsy result. With nextURL='${nextURL}', we got as '${nextURLMatcher}' as result`
-            );
+      spotify
+        .getUserPlaylists({ offset, limit })
+        .then((result) => {
+          if (result.statusCode !== 200) {
+            const body = result.body as { error?: { status?: number; message?: string } | undefined };
+            rej(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
           }
-        } else {
-          res(result.body.items);
-        }
-      });
+          const nextURL = result.body.next;
+          if (nextURL) {
+            const nextOffset = new URL(nextURL).searchParams.get('offset');
+            const nextLimit = new URL(nextURL).searchParams.get('limit');
+            if (nextOffset && nextLimit) {
+              this.getMany(parseInt(nextOffset), parseInt(nextLimit), spotify)
+                .then((nextResult) => res(nextResult.concat(result.body.items)))
+                .catch(rej);
+            } else {
+              rej(`nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`);
+            }
+          } else {
+            res(result.body.items);
+          }
+        })
+        .catch(rej);
     });
   };
 
   //* methods
+  public refresh(credentials: SpotifyCredentials, includeOldestTrack = false): Promise<Playlist> {
+    const spotify = getSpotify(credentials);
+    const db = DB.getInstance();
+    return new Promise<Playlist>((res, rej) => {
+      spotify
+        .getPlaylist(this._spotifyId, {
+          fields: `name,tracks(total${includeOldestTrack ? ',items(added_at),next' : ''})`,
+        })
+        .then((data) => {
+          const { name, tracks } = data.body;
+          const { total, items, next } = tracks;
+          let allItems = items;
+          if (next) {
+            const nextOffset = new URL(next).searchParams.get('offset');
+            const nextLimit = new URL(next).searchParams.get('limit');
+            if (nextOffset && nextLimit) {
+              Playlist.getTracks(spotify, this._spotifyId, parseInt(nextOffset), parseInt(nextLimit))
+                .then((nextResult) => (allItems = allItems.concat(nextResult)))
+                .catch(rej);
+            }
+          }
+          let oldestTrackDate: Moment = moment();
+          if (includeOldestTrack) {
+            allItems.forEach((i) => {
+              const addedAt = moment(i.added_at);
+              if (addedAt.isBefore(oldestTrackDate)) {
+                oldestTrackDate = addedAt;
+              }
+            });
+          }
+          db.playlist
+            .update({
+              spotifyId: this._spotifyId,
+              name: name !== this._name ? name : undefined,
+              numberOfTracks: total !== this._numberOfTracks ? total : undefined,
+              oldestTrack: includeOldestTrack ? oldestTrackDate : undefined,
+            })
+            .then(res)
+            .catch(rej);
+        })
+        .catch(rej);
+    });
+  }
 }
 
 export default Playlist;

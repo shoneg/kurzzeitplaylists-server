@@ -53,6 +53,31 @@ class Playlist {
     });
   }
 
+  get(id: string): Promise<AppPlaylist> {
+    return new Promise<AppPlaylist>((res, rej) => {
+      this.pool
+        .query<RowDataPacket[]>('SELECT * FROM playlist WHERE spotifyId = ?', [id])
+        .then((queryResult) => {
+          const count = queryResult[0].length;
+          if (count >= 1) {
+            if (count > 1) {
+              logger.warn(`There were found ${count} playlists with id='${id}'`);
+            }
+            const dbPlaylist = queryResult[0][0] as PlaylistModel;
+            const playlist = Playlist.model2Playlist(dbPlaylist);
+            res(playlist);
+          } else {
+            logger.info(`no playlist found for id='${id}'`);
+            rej('Cannot find playlist');
+          }
+        })
+        .catch((err) => {
+          logger.error(`Got an unexpected error while getting playlist with id='${id}':`, err);
+          rej('Error while querying playlist');
+        });
+    });
+  }
+
   /**
    * @returns number of added rows
    */
@@ -84,6 +109,53 @@ class Playlist {
           rej(err);
         });
     });
+  }
+
+  update(playlist: Pick<AppPlaylist, 'spotifyId'> & Partial<Omit<AppPlaylist, 'spotifyId'>>): Promise<AppPlaylist> {
+    const { discardPlaylist, maxTrackAge, maxTracks, name, numberOfTracks, oldestTrack, spotifyId } = playlist;
+    if (discardPlaylist || maxTrackAge || maxTracks || name || numberOfTracks || oldestTrack) {
+      let query = 'UPDATE playlist SET ';
+      let values: (string | Date)[] = [];
+      (
+        [
+          { v: discardPlaylist, n: 'discardPlaylist' },
+          { v: maxTrackAge, n: 'maxTrackAge' },
+          { v: maxTracks, n: 'maxTracks' },
+          { v: name, n: 'name' },
+          { v: numberOfTracks, n: 'numberOfTracks' },
+          { v: oldestTrack?.toDate(), n: 'oldestTrack' },
+        ] as { v: string | Date; n: string }[]
+      ).forEach(({ v, n }) => {
+        if (v) {
+          query += n + ' = ?, ';
+          values.push(v);
+        }
+      });
+      query = query.substring(0, query.length - 2) + ' WHERE spotifyId = ?';
+      values.push(spotifyId);
+      return new Promise<AppPlaylist>((res, rej) => {
+        this.pool
+          .query<ResultSetHeader>(query, values)
+          .then((updateResult) => {
+            const { affectedRows } = updateResult[0];
+            if (affectedRows >= 1) {
+              if (affectedRows > 1) {
+                logger.warn(`Instead of 1 row, we've updated ${affectedRows}`);
+              }
+              this.get(playlist.spotifyId).then(res).catch(rej);
+            } else {
+              logger.warn('We did inserted 0 instead of 1 row into playlist');
+              rej('Could not find playlist');
+            }
+          })
+          .catch((err) => {
+            logger.error(`Got an unexpected error while updating playlist with id='${spotifyId}':`, err);
+            rej('Error while updating');
+          });
+      });
+    } else {
+      return this.get(playlist.spotifyId);
+    }
   }
 
   /**

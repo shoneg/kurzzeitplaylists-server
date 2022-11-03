@@ -86,11 +86,13 @@ class User {
         .then((queryResult) => {
           const count = queryResult[0].length;
           if (count >= 1) {
-            logger.warn(`There were found ${count} users with id='${id}'`);
+            if (count > 1) {
+              logger.warn(`There were found ${count} users with id='${id}'`);
+            }
             const dbUser = queryResult[0][0] as UserModel;
             User.model2User(dbUser).then(res).catch(rej);
           } else {
-            logger.warn(`unexpectedly ${count} users where inserted into user instead of 1.`);
+            logger.info(`no user found for id='${id}'`);
             rej('Cannot find user');
           }
         })

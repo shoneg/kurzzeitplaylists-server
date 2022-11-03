@@ -15,8 +15,8 @@ class Credentials {
   }
 
   static model2Credentials(credentials: CredentialsModel): SpotifyCredentials {
-    const { accessToken, expiresAt, refreshToken, spotifyId } = credentials;
-    const ret = new SpotifyCredentials(accessToken, expiresAt, refreshToken, spotifyId);
+    const { accessToken, expiresAt, refreshToken, userId } = credentials;
+    const ret = new SpotifyCredentials(accessToken, expiresAt, refreshToken, userId);
     return ret;
   }
 
@@ -76,7 +76,7 @@ class Credentials {
             }
             res();
           } else {
-            logger.warn('We did inserted 0 instead of 1 row into credentials');
+            logger.warn('We have inserted 0 instead of 1 row into credentials');
             rej();
           }
         })
@@ -87,7 +87,7 @@ class Credentials {
     });
   }
 
-  update(credentials: Partial<SpotifyCredentials>, spotifyId: string): Promise<SpotifyCredentials> {
+  update(credentials: Partial<SpotifyCredentials>, userId: string): Promise<SpotifyCredentials> {
     const db = DB.getInstance();
     const { accessToken, expiresAt, refreshToken } = credentials;
     if (accessToken || expiresAt || refreshToken) {
@@ -105,8 +105,8 @@ class Credentials {
           values.push(v);
         }
       });
-      query = query.substring(0, query.length - 2) + ' WHERE spotifyId = ?';
-      values.push(spotifyId);
+      query = query.substring(0, query.length - 2) + ' WHERE userId = ?';
+      values.push(userId);
       return new Promise<SpotifyCredentials>((res, rej) => {
         this.pool
           .query<ResultSetHeader>(query, values)
@@ -116,19 +116,19 @@ class Credentials {
               if (affectedRows > 1) {
                 logger.warn(`Instead of 1 row, we've updated ${affectedRows}`);
               }
-              db.credentials.get(spotifyId).then(res).catch(rej);
+              db.credentials.get(userId).then(res).catch(rej);
             } else {
-              logger.warn('We did inserted 0 instead of 1 row into credentials');
+              logger.warn('We have updated 0 instead of 1 row of credentials');
               rej('Could not find credentials');
             }
           })
           .catch((err) => {
-            logger.error(`Got an unexpected error while updating credentials with id='${spotifyId}'`);
+            logger.error(`Got an unexpected error while updating credentials with id='${userId}':`, err);
             rej('Error while updating');
           });
       });
     } else {
-      return db.credentials.get(spotifyId);
+      return db.credentials.get(userId);
     }
   }
 }
