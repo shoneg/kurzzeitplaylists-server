@@ -36,7 +36,7 @@ class User {
         .insert(credentials, spotifyId)
         .then(() => {
           this.pool
-            .query<ResultSetHeader>('INSERT INTO user (displayName,spotifyId)VALUES ( ?, ? )', [displayName, spotifyId])
+            .query<ResultSetHeader>('INSERT INTO user (displayName,spotifyId,credentialsId)VALUES ( ?, ?, ? )', [displayName, spotifyId, spotifyId])
             .then((insertionResult) => {
               const { affectedRows } = insertionResult[0];
               if (affectedRows === 1) {
@@ -122,6 +122,9 @@ class User {
                     );
                   }
                   db.user.get(spotifyId).then(res).catch(rej);
+                } else {
+                  logger.warn(`Tried to update not existing user with id='${spotifyId}'`);
+                  rej('Could not find user');
                 }
               })
               .catch((err) => {
@@ -159,6 +162,33 @@ class User {
         .catch((err) => {
           logger.error(`Got an unexpected error while getting playlists of user with id='${userId}':`, err);
           rej('Cannot get playlists');
+        });
+    });
+  }
+
+  delete(user: AppUser): Promise<void> {
+    const db = DB.getInstance();
+    const id = user.spotifyId;
+    return new Promise<void>((res, rej) => {
+      this.pool
+        .query<ResultSetHeader>('DELETE FROM user WHERE spotifyId = ?', [id])
+        .then((deleteResult) => {
+          const { affectedRows } = deleteResult[0];
+          if (affectedRows >= 1) {
+            if (affectedRows > 1) {
+              logger.error(
+                `Seems like there were ${affectedRows} (more than 1) user with id '${id}', now we've deleted all of theme… ups`
+              );
+            }
+            db.credentials.delete(id).then(res).catch(rej);
+          } else {
+            logger.warn(`Tried to delete not existing user with id='${id}'`);
+            rej('Could not find user');
+          }
+        })
+        .catch((err) => {
+          logger.error(`Got an unexpected error while deleting user with id='${id}':`, err);
+          rej('Cannot delete user');
         });
     });
   }

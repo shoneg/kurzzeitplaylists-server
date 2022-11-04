@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS credentials(
 CREATE TABLE IF NOT EXISTS user(
     displayName VARCHAR(100) NOT NULL,
     spotifyId CHAR(25) NOT NULL,
+    credentialsId CHAR(25) NOT NULL,
     PRIMARY KEY(spotifyId),
-    CONSTRAINT fkCredentials FOREIGN KEY(spotifyId) REFERENCES credentials(userId) On DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT CHECK (spotifyId = credentialsId),
+    CONSTRAINT fkCredentials FOREIGN KEY(credentialsId) REFERENCES credentials(userId) On DELETE RESTRICT ON UPDATE CASCADE
 );
 CREATE TABLE IF NOT EXISTS playlist(
     discardPlaylist CHAR(25),

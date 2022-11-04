@@ -59,14 +59,14 @@ class Credentials {
     });
   }
 
-  insert(credentials: SpotifyCredentials, spotifyId: string): Promise<void> {
+  insert(credentials: SpotifyCredentials, ownerId: string): Promise<void> {
     const { accessToken, expiresAt, refreshToken } = credentials;
     return new Promise<void>((res, rej) => {
       this.pool
         .query<ResultSetHeader>(
           `INSERT INTO credentials (accessToken, expiresAt, refreshToken, userId)
         VALUES ( ?, ?, ?, ? )`,
-          [accessToken, expiresAt.toDate(), refreshToken, spotifyId]
+          [accessToken, expiresAt.toDate(), refreshToken, ownerId]
         )
         .then((insertionResult) => {
           const { affectedRows } = insertionResult[0];
@@ -130,6 +130,31 @@ class Credentials {
     } else {
       return db.credentials.get(userId);
     }
+  }
+
+  delete(ownerId: string): Promise<void> {
+    return new Promise<void>((res, rej) => {
+      this.pool
+        .query<ResultSetHeader>('DELETE FROM credentials WHERE userId = ?', [ownerId])
+        .then((deleteResult) => {
+          const { affectedRows } = deleteResult[0];
+          if (affectedRows >= 1) {
+            if (affectedRows > 1) {
+              logger.error(
+                `Seems like there were ${affectedRows} (more than 1) credentials with id '${ownerId}', now we've deleted all of theme… ups`
+              );
+            }
+            res();
+          } else {
+            logger.warn(`Tried to delete not existing credentials with id='${ownerId}'`);
+            rej('Could not find credentials');
+          }
+        })
+        .catch((err) => {
+          logger.error(`Got an unexpected error while deleting credentials with id='${ownerId}':`, err);
+          rej('Cannot delete credentials');
+        });
+    });
   }
 }
 

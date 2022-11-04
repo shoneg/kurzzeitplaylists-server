@@ -19,4 +19,5 @@ export type PlaylistModel = {
 export type UserModel = {
   displayName: string;
   spotifyId: string;
+  credentialsId: string;
 };

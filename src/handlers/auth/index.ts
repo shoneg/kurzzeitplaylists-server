@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import passport from 'passport';
-import { logout, authView } from './service';
+import { ensureAuthenticated } from '../customMiddleware';
+import { logout, authView, deleteView, deleteAccount } from './service';
 
 const authRouter = Router();
 
 authRouter.get('/', authView);
 authRouter.get('/logout', logout);
+authRouter.get('/delete', ensureAuthenticated, deleteView);
+authRouter.post('/delete', ensureAuthenticated, deleteAccount);
 authRouter.get(
   '/login',
   passport.authenticate('spotify', {

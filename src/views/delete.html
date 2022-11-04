@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<head>
+  <title>Kurzzeitplaylists</title>
+</head>
+<body>
+  <script>
+    window.onload = () => {
+      const sureInput = document.getElementById('sure');
+      sureInput.onpaste = (e) => e.preventDefault();
+    };
+
+    function onInput(newValue) {
+      const submitButton = document.getElementById('go');
+      submitButton.disabled = newValue !== "Yes, I'm sure!";
+    }
+  </script>
+  <h1>Delete my account on this website including all playlist configurations I've made!</h1>
+  <form method="post">
+    <label for="sure"
+      >If you are sure you want to delete your account including all playlist configurations you've made, type "Yes, I'm
+      sure!"</label
+    ><br />
+    <input onkeyup="onInput(this.value)" id="sure" name="sure" type="text" /><br /><br />
+    <input disabled type="submit" id="go" value="Delete irrevocable" />
+  </form>
+  <br />
+  <hr />
+  <a href="/">Go back to home page</a>
+</body>
