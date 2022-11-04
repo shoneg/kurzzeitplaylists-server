@@ -13,7 +13,23 @@
     <label for="maxAge">Maximal age of tracks (in days):</label><br />
     <input type="number" id="maxAge" name="maxAge" min="1" value="{{ maxAge }}" /><br />
     <label for="maxTracks">Maximal tracks in playlist:</label><br />
-    <input type="number" id="maxTracks" name="maxTracks" min="1" value="{{ maxTracks }}" /><br /><br />
+    <input type="number" id="maxTracks" name="maxTracks" min="1" value="{{ maxTracks }}" /><br />
+    <label for="discardPlaylist">Move songs into this playlist instead deleting them:</label><br />
+    <select id="discardPlaylist" name="discardPlaylist" >
+      {% if discardPlaylist == '' %}
+      <option selected value="" >No Playlist (songs will be deleted from {{ name }})</option>
+      {% else %}
+      <option value="" >No Playlist (songs will be deleted from {{ name }})</option>
+      {% endif %}
+      {% for playlist in playlists %}
+      {% if discardPlaylist == playlist.spotifyId %}
+      <option selected value="{{ playlist.spotifyId }}">{{ playlist.name }}</option>
+      {% else %}
+      <option value="{{ playlist.spotifyId }}">{{ playlist.name }}</option>
+      {% endif %}
+      {% endfor %}
+    </ul>
+    </select><br /><br />
     <input type="submit" value="Save" />
   </form>
   <br />

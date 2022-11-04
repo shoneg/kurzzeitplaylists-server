@@ -126,7 +126,7 @@ class Playlist {
           { v: oldestTrack?.toDate(), n: 'oldestTrack' },
         ] as { v: string | Date; n: string }[]
       ).forEach(({ v, n }) => {
-        if (v) {
+        if (v !== undefined) {
           query += n + ' = ?, ';
           values.push(v);
         }

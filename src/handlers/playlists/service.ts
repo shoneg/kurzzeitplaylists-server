@@ -59,7 +59,7 @@ export const playlistsView: RequestHandler = (req, res, next) => {
       ? { newPlaylists: req.query.newOnes, deletedPlaylists: req.query.deleted }
       : undefined;
   db.user
-    .getPlaylists(user)
+    .getPlaylists(user, 'lexicographic_az')
     .then((playlists) => {
       res.render('playlists.html', { user, playlists, recognizeRes });
     })
@@ -76,16 +76,23 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
       p
         .refresh(user.credentials, true)
         .then((p) =>
-          res.render('edit.html', {
-            name: p.name,
-            oldestTrack: {
-              date: p.oldestTrack.format('DD.MM.YYYY'),
-              duration: moment().diff(p.oldestTrack, 'd'),
-            },
-            numberOfTracks: p.numberOfTracks,
-            maxAge: p.maxTrackAge ?? '',
-            maxTracks: p.maxTracks ?? '',
-          })
+          db.user
+            .getPlaylists(user, 'lexicographic_az')
+            .then((playlists) =>
+              res.render('edit.html', {
+                name: p.name,
+                oldestTrack: {
+                  date: p.oldestTrack.format('DD.MM.YYYY'),
+                  duration: moment().diff(p.oldestTrack, 'd'),
+                },
+                numberOfTracks: p.numberOfTracks,
+                maxAge: p.maxTrackAge ?? '',
+                maxTracks: p.maxTracks ?? '',
+                discardPlaylist: p.discardPlaylist ?? '',
+                playlists: playlists.filter((x) => x.spotifyId !== p.spotifyId),
+              })
+            )
+            .catch(next)
         )
         .catch(next)
     )
@@ -98,13 +105,18 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
   */
 export const submitEditPlaylist: RequestHandler = (req, res, next) => {
   const { id } = req.params;
-  const { maxAge: maxTrackAge, maxTracks } = req.body;
+  const { maxAge, maxTracks, discardPlaylist } = req.body;
   const db = DB.getInstance();
   db.playlist
     .get(id)
     .then((p) =>
       db.playlist
-        .update({ spotifyId: id, maxTrackAge, maxTracks })
+        .update({
+          spotifyId: id,
+          maxTrackAge: maxAge ? maxAge : null,
+          maxTracks: maxTracks ? maxTracks : null,
+          discardPlaylist: discardPlaylist ? discardPlaylist : null,
+        })
         .then(() => res.redirect('/playlists'))
         .catch(next)
     )

@@ -136,7 +136,7 @@ class User {
     });
   }
 
-  getPlaylists(user: AppUser | string): Promise<AppPlaylist[]> {
+  getPlaylists(user: AppUser | string, sort?: 'lexicographic_az' | 'lexicographic_za'): Promise<AppPlaylist[]> {
     let userId: string;
     if (typeof user === 'string') {
       userId = user;
@@ -149,7 +149,12 @@ class User {
         .then((result) => {
           const dbPlaylists = result[0] as PlaylistModel[];
           const playlists = dbPlaylists.map(Playlist.model2Playlist);
-          res(playlists);
+          if (sort) {
+            const sorted = AppPlaylist.sortLexicographic(playlists, sort.split('_')[1] as 'az' | 'za');
+            res(sorted);
+          } else {
+            res(playlists);
+          }
         })
         .catch((err) => {
           logger.error(`Got an unexpected error while getting playlists of user with id='${userId}':`, err);

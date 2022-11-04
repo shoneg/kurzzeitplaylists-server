@@ -133,6 +133,19 @@ class Playlist {
     });
   };
 
+  public static compareLexicographic(p1: Playlist, p2: Playlist): number {
+    return p1._name.localeCompare(p2.name);
+  }
+
+  public static sortLexicographic(playlists: Playlist[], order: 'az' | 'za'): Playlist[] {
+    const az = playlists.sort(this.compareLexicographic);
+    if ((order = 'az')) {
+      return az;
+    }
+    const za = az.reverse();
+    return za;
+  }
+
   public static fromApiObj(simplePlaylist: SpotifyApi.PlaylistObjectSimplified, oldestTrackValue = moment()): Playlist {
     const { name, tracks, owner, id } = simplePlaylist;
     const playlist = new Playlist({
