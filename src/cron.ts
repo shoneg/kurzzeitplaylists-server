@@ -5,7 +5,7 @@ import { getSpotify, refreshAllSessions } from './spotifyApi';
 import { Playlist } from './types';
 import Logger, { DEBUG } from './utils/logger';
 
-const logger = new Logger(DEBUG.WARN, '/cron');
+const logger = new Logger(DEBUG.INFO, '/cron');
 
 const d: (inp: Parameters<typeof moment.duration>[0], unit: Parameters<typeof moment.duration>[1]) => number = (
   inp,
@@ -13,6 +13,7 @@ const d: (inp: Parameters<typeof moment.duration>[0], unit: Parameters<typeof mo
 ) => moment.duration(inp, unit).asMilliseconds();
 
 const refreshSessions = () => {
+  logger.info('Start token refreshing');
   const expiresBefore = moment().subtract(6, 'h');
   refreshAllSessions(expiresBefore)
     .then(() => {})
@@ -64,6 +65,7 @@ const removeTracks = (
 };
 
 export const trackDeletion = () => {
+  logger.info('Start track deletion');
   const db = DB.getInstance();
   db.playlist
     .getTrackDeletionCandidates()
