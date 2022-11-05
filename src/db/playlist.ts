@@ -161,7 +161,7 @@ class Playlist {
   /**
    * @returns number of deleted rows
    */
-  public delete(playlists: AppPlaylist[]): Promise<number> {
+  delete(playlists: AppPlaylist[]): Promise<number> {
     return new Promise<number>((res, rej) => {
       let deleteQuery = 'DELETE FROM playlist WHERE spotifyId IN (';
       for (let i = 0; i < playlists.length; i++) {
@@ -177,6 +177,28 @@ class Playlist {
         .catch((err) => {
           logger.error('While deleting playlists we got an unexpected error:', err);
           rej(err);
+        });
+    });
+  }
+
+  /**
+   * Queries all the playlist where maxTrackAge less than the oldest Track
+   * or maxTracks is set.
+   */
+  getTrackDeletionCandidates(): Promise<AppPlaylist[]> {
+    return new Promise<AppPlaylist[]>((res, rej) => {
+      this.pool
+        .query<RowDataPacket[]>(
+          'SELECT * FROM playlist WHERE maxTracks IS NOT NULL OR ( maxTrackAge IS NOT NULL AND oldestTrack < DATE_SUB( NOW(), INTERVAL maxTrackAge DAY ) )'
+        )
+        .then((queryResult) => {
+          const dbPlaylists = queryResult[0] as PlaylistModel[];
+          const playlists = dbPlaylists.map((p) => Playlist.model2Playlist(p));
+          res(playlists);
+        })
+        .catch((err) => {
+          logger.error('Got an unexpected error while getting track deletion candidates:', err);
+          rej('Error while querying deletion candidates');
         });
     });
   }

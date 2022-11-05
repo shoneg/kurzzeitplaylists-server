@@ -7,8 +7,7 @@ import Logger, { DEBUG } from './src/utils/logger';
 import rootRouter from './src/handlers';
 import DB from './src/db';
 import { QueryError } from 'mysql2';
-import moment from 'moment';
-import { refreshAllSessions } from './src/spotifyApi';
+import cron from './src/cron';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
@@ -49,15 +48,9 @@ app.use('', rootRouter);
 
 app.use(defaultErrorHandler);
 
+cron();
+
 // Server setup
 app.listen(PORT, 'localhost', 100, () => {
   logger.info(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
 });
-
-// refresh tokens of all users
-setInterval(() => {
-  const expiresBefore = moment().subtract(6, 'h');
-  refreshAllSessions()
-    .then(() => {})
-    .catch(() => {});
-}, moment.duration(30, 'm').asMilliseconds());

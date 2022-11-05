@@ -100,15 +100,16 @@ class Playlist {
   }
 
   //* static methods
-  private static getTracks = (
+  public static getTracks = (
     spotify: SpotifyWebApi,
     id: string,
     offset = 0,
-    limit = 50
+    limit = 50,
+    itemFields = 'added_at'
   ): Promise<SpotifyApi.PlaylistTrackObject[]> => {
     return new Promise<SpotifyApi.PlaylistTrackObject[]>((res, rej) => {
       spotify
-        .getPlaylistTracks(id, { offset, limit, fields: 'items(added_at),next' })
+        .getPlaylistTracks(id, { offset, limit, fields: `items(${itemFields}),next` })
         .then((result) => {
           if (result.statusCode !== 200) {
             const body = result.body as { error?: { status?: number; message?: string } | undefined };
@@ -119,7 +120,7 @@ class Playlist {
             const nextOffset = new URL(nextURL).searchParams.get('offset');
             const nextLimit = new URL(nextURL).searchParams.get('limit');
             if (nextOffset && nextLimit) {
-              this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit))
+              this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit), itemFields)
                 .then((nextResult) => res(nextResult.concat(result.body.items)))
                 .catch(rej);
             } else {
