@@ -21,6 +21,17 @@ export const ensureAuthenticated: RequestHandler = (req, res, next) => {
   }
 };
 
+export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
+  const { token } = req.query;
+  if (!token) {
+    res.status(400).send("<p>Missing token! Got to the <a href='/'>start page</a> to get one.</p>");
+  } else if (!User.isInWaitingFor(token.toString())) {
+    res.status(401).send("<p>You're token expired. Try to <a href='/auth'>login</a> again.</p>");
+  } else {
+    next();
+  }
+};
+
 export const logging: RequestHandler = (req, res, next) => {
   logger.log(`requested ${req.method} '${req.originalUrl}'`);
   next();

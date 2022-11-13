@@ -2,8 +2,9 @@ import session from 'express-session';
 import moment from 'moment';
 import passport from 'passport';
 import { app } from '..';
-import { SECURE_COOKIES_ONLY, SESSION_SECRET, SESSION_TIMEOUT } from './config';
-import { strategy } from './spotifyApi';
+import { RUNNING_WITH_TLS, SESSION_SECRET, SESSION_TIMEOUT } from './config';
+import { strategy as spotifyStrategy } from './spotifyApi';
+import { strategy as nextcloudStrategy } from './nextcloud';
 import DB from './db';
 import Logger, { DEBUG } from './utils/logger';
 
@@ -17,7 +18,8 @@ export const initPassport: () => void = () => {
 
   passport.deserializeUser((obj: any, done) => done(null, obj));
 
-  passport.use(strategy);
+  passport.use(nextcloudStrategy);
+  passport.use(spotifyStrategy);
 
   const dbSessionStore = DB.getInstance().getSessionStore();
   app.use(
@@ -26,7 +28,7 @@ export const initPassport: () => void = () => {
         sameSite: 'lax',
         httpOnly: true,
         maxAge: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
-        secure: SECURE_COOKIES_ONLY,
+        secure: RUNNING_WITH_TLS,
       },
       name: 'sid',
       resave: false,

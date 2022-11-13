@@ -20,6 +20,8 @@ export const logout: RequestHandler = (req, res, next) => {
   });
 };
 
+export const onLogin: RequestHandler = (req, res) => res.redirect('/');
+
 export const deleteView: RequestHandler = (req, res) => res.render('delete.html');
 
 export const deleteAccount: RequestHandler = (req, res, next) => {
@@ -41,4 +43,10 @@ export const deleteAccount: RequestHandler = (req, res, next) => {
       )
       .catch(next);
   }
+};
+
+export const renderNextcloudLoginView: RequestHandler = (req, res) => res.render('nextcloudLogin.html');
+export const onNextcloudLogin: RequestHandler = (req, res) => {
+  const token = User.addWaitFor();
+  res.redirect('/auth/login?token=' + token);
 };

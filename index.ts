@@ -1,5 +1,5 @@
 import { defaultErrorHandler } from './src/handlers/errorHandlers';
-import { HOST, PORT } from './src/config';
+import { HOST, PORT, RUNNING_WITH_TLS } from './src/config';
 import { initPassport } from './src/passport';
 import consolidate from 'consolidate';
 import express from 'express';
@@ -52,5 +52,5 @@ cron();
 
 // Server setup
 app.listen(PORT, 'localhost', 100, () => {
-  logger.info(`Kurzzeitplaylistserver is running on http://${HOST}:${PORT}/`);
+  logger.info(`Kurzzeitplaylistserver is running on ${RUNNING_WITH_TLS ? 'https' : 'http'}://${HOST}:${PORT}/`);
 });

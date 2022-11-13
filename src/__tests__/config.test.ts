@@ -7,10 +7,14 @@ import {
   DB_PORT,
   DB_USER,
   HOST,
+  NEXTCLOUD_CLIENT_ID,
+  NEXTCLOUD_CLIENT_SECRET,
+  NEXTCLOUD_URL,
   PORT,
-  SECURE_COOKIES_ONLY,
+  RUNNING_WITH_TLS,
   SESSION_SECRET,
   SESSION_TIMEOUT,
+  URI,
 } from '../config';
 
 test('all env variables should be initialized', () => {
@@ -19,11 +23,15 @@ test('all env variables should be initialized', () => {
   expect(DB_HOST).toBeDefined();
   expect(DB_NAME).toBeDefined();
   expect(DB_PASSWORD).toBeDefined();
-  expect(DB_USER).toBeDefined();
   expect(DB_PORT).toBeDefined();
+  expect(DB_USER).toBeDefined();
   expect(HOST).toBeDefined();
+  expect(NEXTCLOUD_CLIENT_ID).toBeDefined();
+  expect(NEXTCLOUD_CLIENT_SECRET).toBeDefined();
+  expect(NEXTCLOUD_URL).toBeDefined();
   expect(PORT).toBeDefined();
-  expect(SECURE_COOKIES_ONLY).toBeDefined();
+  expect(RUNNING_WITH_TLS).toBeDefined();
   expect(SESSION_SECRET).toBeDefined();
   expect(SESSION_TIMEOUT).toBeDefined();
+  expect(URI).toBeDefined();
 });

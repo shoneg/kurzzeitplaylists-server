@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import moment from 'moment';
 import DB from '../db';
 import { getSpotify } from '../spotifyApi';
@@ -7,6 +8,7 @@ import SpotifyCredentials from './spotifyCredentials';
 const logger = new Logger(DEBUG.WARN, '/types/user');
 
 class User {
+  private static waitingFor: { timestamp: Date; token: string }[] = [];
   private _credentials: SpotifyCredentials;
   private _displayName: string;
   private _spotifyId: string;
@@ -25,6 +27,16 @@ class User {
 
   public get spotifyId(): string {
     return this._spotifyId;
+  }
+
+  static {
+    setInterval(() => {
+      this.waitingFor.forEach((elm, index) => {
+        if (moment(elm.timestamp).isBefore(moment().add(30, 's'))) {
+          delete this.waitingFor[index];
+        }
+      });
+    }, moment.duration(60, 's').asMilliseconds());
   }
 
   // * constructors
@@ -53,6 +65,18 @@ class User {
     const user = new User([_accessToken, _expiresAt, _refreshToken, _spotifyId], _displayName, _spotifyId);
     return user;
   }
+  public static addWaitFor = (token?: string): string => {
+    const _token = token || randomUUID();
+    this.waitingFor.push({ timestamp: new Date(), token: _token });
+    return _token;
+  };
+  public static isInWaitingFor = (token: string): boolean => {
+    const i = this.waitingFor.map((w) => w.token).indexOf(token);
+    if (i) {
+      delete this.waitingFor[i];
+    }
+    return i >= 0;
+  };
 
   //* methods
   public refreshCredentials(): Promise<User> {

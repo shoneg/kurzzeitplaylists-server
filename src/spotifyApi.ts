@@ -1,4 +1,4 @@
-import { CLIENT_ID, CLIENT_SECRET, HOST, PORT } from './config';
+import { CLIENT_ID, CLIENT_SECRET, HOST, PORT, RUNNING_WITH_TLS, URI } from './config';
 import { Strategy as SpotifyStrategy } from 'passport-spotify';
 import { User } from './types';
 import moment from 'moment';
@@ -9,7 +9,9 @@ import Logger, { DEBUG } from './utils/logger';
 const logger = new Logger(DEBUG.WARN, '/spotifyApi');
 
 const authCallbackPath = Object.freeze('/auth/callback');
-const redirectUri = Object.freeze(`http://${HOST}:${PORT}${authCallbackPath}`);
+const redirectUri = Object.freeze(
+  `${URI || `${RUNNING_WITH_TLS ? 'https' : 'http'}://${HOST}:${PORT}`}${authCallbackPath}`
+);
 
 export const strategy = new SpotifyStrategy(
   {

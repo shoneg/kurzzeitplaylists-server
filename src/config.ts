@@ -33,7 +33,14 @@ export const DB_PASSWORD = getEnvVariable('DB_PASSWORD');
 export const DB_PORT = parseInt(getEnvVariable('DB_PORT', '3306'));
 export const DB_USER = getEnvVariable('DB_USER');
 export const HOST = getEnvVariable('HOST', 'localhost');
+export const NEXTCLOUD_CLIENT_ID = getEnvVariable('NEXTCLOUD_CLIENT_ID');
+export const NEXTCLOUD_CLIENT_SECRET = getEnvVariable('NEXTCLOUD_CLIENT_SECRET');
+export const NEXTCLOUD_URL = getEnvVariable('NEXTCLOUD_URL');
 export const PORT = parseInt(getEnvVariable('PORT', '8888'));
-export const SECURE_COOKIES_ONLY = parseBoolean(getEnvVariable('SECURE_COOKIES_ONLY', 'true') as 'true' | 'false');
+export const RUNNING_WITH_TLS = parseBoolean(getEnvVariable('RUNNING_WITH_TLS', 'true') as 'true' | 'false');
 export const SESSION_SECRET = getEnvVariable('SESSION_SECRET');
 export const SESSION_TIMEOUT = parseInt(getEnvVariable('SESSION_TIMEOUT', '300'));
+export const URI = (() => {
+  const uri = getEnvVariable('URI', 'false');
+  return uri === 'false' ? false : uri;
+})();
