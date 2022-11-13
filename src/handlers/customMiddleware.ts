@@ -35,7 +35,7 @@ export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
 
 export const reroute: RequestHandler = (req, res, next) => {
   const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-  if (URI && new URL(URI).origin !== url.origin) {
+  if (URI && new URL(URI).host !== url.host) {
     res.redirect(URI + url.pathname + url.search + url.hash);
   } else {
     next();
