@@ -1,5 +1,6 @@
 import { RequestHandler } from 'express';
 import moment from 'moment';
+import { URI } from '../config';
 import { User } from '../types';
 import Logger, { DEBUG } from '../utils/logger';
 
@@ -27,6 +28,15 @@ export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
     res.status(400).send("<p>Missing token! Got to the <a href='/'>start page</a> to get one.</p>");
   } else if (!User.isInWaitingFor(token.toString())) {
     res.status(401).send("<p>You're token expired. Try to <a href='/auth'>login</a> again.</p>");
+  } else {
+    next();
+  }
+};
+
+export const reroute: RequestHandler = (req, res, next) => {
+  const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
+  if (URI && new URL(URI).origin !== url.origin) {
+    res.redirect(URI + url.pathname + url.search + url.hash);
   } else {
     next();
   }

@@ -1,4 +1,4 @@
-import { ensureAuthenticated, logging } from './customMiddleware';
+import { ensureAuthenticated, logging, reroute } from './customMiddleware';
 import { falsePathErrorView } from './service';
 import { Router } from 'express';
 import authRouter from './auth';
@@ -10,6 +10,7 @@ const rootRouter = Router();
 
 rootRouter.use(bodyParser.urlencoded({ extended: true }));
 rootRouter.all('*', logging);
+rootRouter.all('*', reroute)
 
 rootRouter.get('/', (req, res) => {
   if (!req.user) {
