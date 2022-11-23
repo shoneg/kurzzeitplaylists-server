@@ -32,6 +32,14 @@ export const DB_NAME = getEnvVariable('DB_NAME');
 export const DB_PASSWORD = getEnvVariable('DB_PASSWORD');
 export const DB_PORT = parseInt(getEnvVariable('DB_PORT', '3306'));
 export const DB_USER = getEnvVariable('DB_USER');
+export const GLOBAL_DEBUG = (() => {
+  const d = getEnvVariable('GLOBAL_DEBUG', '');
+  if (d === '') {
+    return undefined;
+  } else {
+    return parseInt(d);
+  }
+})();
 export const HOST = getEnvVariable('HOST', 'localhost');
 export const NEXTCLOUD_CLIENT_ID = getEnvVariable('NEXTCLOUD_CLIENT_ID');
 export const NEXTCLOUD_CLIENT_SECRET = getEnvVariable('NEXTCLOUD_CLIENT_SECRET');

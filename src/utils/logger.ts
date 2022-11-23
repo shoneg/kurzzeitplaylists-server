@@ -1,3 +1,7 @@
+import { GLOBAL_DEBUG as GLOBAL_DEBUG_ENV } from '../config';
+
+const GLOBAL_DEBUG: DEBUG | undefined = GLOBAL_DEBUG_ENV;
+
 export enum DEBUG {
   LOG,
   INFO,
@@ -10,7 +14,7 @@ export default class Logger {
   private tag: string;
 
   public constructor(debug: DEBUG, tag: string) {
-    this.debug = debug;
+    this.debug = GLOBAL_DEBUG ?? debug;
     this.tag = `[${tag}]`;
   }
 
