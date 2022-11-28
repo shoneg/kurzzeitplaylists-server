@@ -111,9 +111,13 @@ class Playlist {
     });
   }
 
-  update(playlist: Pick<AppPlaylist, 'spotifyId'> & Partial<Omit<AppPlaylist, 'spotifyId'>>): Promise<AppPlaylist> {
+  update(
+    playlist: Pick<AppPlaylist, 'spotifyId'> & Partial<Omit<AppPlaylist, 'spotifyId'>>,
+    user?: { spotifyId: string } | string
+  ): Promise<AppPlaylist> {
     const { discardPlaylist, maxTrackAge, maxTracks, name, numberOfTracks, oldestTrack, spotifyId } = playlist;
     if (discardPlaylist || maxTrackAge || maxTracks || name || numberOfTracks || oldestTrack) {
+      const userId = typeof user == 'string' ? user : user?.spotifyId;
       let query = 'UPDATE playlist SET ';
       let values: (string | Date)[] = [];
       (
@@ -133,6 +137,11 @@ class Playlist {
       });
       query = query.substring(0, query.length - 2) + ' WHERE spotifyId = ?';
       values.push(spotifyId);
+      if (userId) {
+        query += 'AND owner = ?';
+        values.push(userId);
+      }
+
       return new Promise<AppPlaylist>((res, rej) => {
         this.pool
           .query<ResultSetHeader>(query, values)

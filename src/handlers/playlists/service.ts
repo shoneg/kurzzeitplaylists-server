@@ -99,24 +99,25 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
-/*
-  - nach löschen oldesttrack neu setzen (nur falls es ein maxAge gibt)
-  - an dieser Stelle auch numberOfTracks setzen
-  */
+
 export const submitEditPlaylist: RequestHandler = (req, res, next) => {
   const { id } = req.params;
+  const user = User.fromExpress(req.user as Express.User);
   const { maxAge, maxTracks, discardPlaylist } = req.body;
   const db = DB.getInstance();
   db.playlist
     .get(id)
     .then((p) =>
       db.playlist
-        .update({
-          spotifyId: id,
-          maxTrackAge: maxAge ? maxAge : null,
-          maxTracks: maxTracks ? maxTracks : null,
-          discardPlaylist: discardPlaylist ? discardPlaylist : null,
-        })
+        .update(
+          {
+            spotifyId: id,
+            maxTrackAge: maxAge ? maxAge : null,
+            maxTracks: maxTracks ? maxTracks : null,
+            discardPlaylist: discardPlaylist ? discardPlaylist : null,
+          },
+          user
+        )
         .then(() => res.redirect('/playlists'))
         .catch(next)
     )
