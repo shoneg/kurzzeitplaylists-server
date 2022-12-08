@@ -4,9 +4,17 @@
 </head>
 <body>
   <h1>Login</h1>
+  {% if url %}
+  <p>
+    You successfully logged in to "Die Wolke".<br />
+    Now you can go to spotify login:
+  </p>
+  <a href={{ url }}>Go to Spotify Login</a>
+  {% else %}
   <p>
     This Website is only available for users of "Die Wolke".<br />
     If you're a "Die Wolke"-User, please login. If you aren't please contact the admin.
   </p>
   <a href="/auth/nextcloudLogin">Go to "Die Wolke" Login</a>
+  {% endif %}
 </body>
