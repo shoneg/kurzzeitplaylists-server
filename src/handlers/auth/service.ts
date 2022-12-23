@@ -51,12 +51,12 @@ export const onNextcloudLogin: RequestHandler = (req, res) => {
   const { headers } = req;
   const token = User.addWaitFor();
   const useragent = headers['user-agent'];
-  if (useragent) {
-    const browserInfo = parseUseragent(useragent);
-    if (browserInfo.isFirefox) {
-      res.redirect('/auth/login?token=' + token);
-      return;
-    }
-  }
+  // if (useragent) {
+  //   const browserInfo = parseUseragent(useragent);
+  //   if (browserInfo.isFirefox) {
+  //     res.redirect('/auth/login?token=' + token);
+  //     return;
+  //   }
+  // }
   res.render('nextcloudLogin.html', { url: '/auth/login?token=' + token });
 };
