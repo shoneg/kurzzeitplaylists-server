@@ -1,5 +1,4 @@
 FROM node:lts-alpine
-ENV NODE_ENV=production
 ENV PORT=3000
 RUN npm install --global nodemon
 RUN npm install --global ts-node

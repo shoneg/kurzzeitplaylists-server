@@ -40,6 +40,9 @@ db.testConnection().then((suc) => {
 app.set('views', __dirname + '/src/views');
 app.set('view engine', 'html');
 
+// reverse proxy
+app.set('trust proxy', 1)
+
 initPassport();
 
 app.engine('html', consolidate.nunjucks);
@@ -48,9 +51,10 @@ app.use('', rootRouter);
 
 app.use(defaultErrorHandler);
 
+
 cron();
 
 // Server setup
-app.listen(PORT, 'localhost', 100, () => {
+app.listen(PORT, '0.0.0.0', 100, () => {
   logger.info(`Kurzzeitplaylistserver is running on ${RUNNING_WITH_TLS ? 'https' : 'http'}://${HOST}:${PORT}/`);
 });

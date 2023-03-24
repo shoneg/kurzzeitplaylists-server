@@ -7,9 +7,6 @@ import {
   DB_PORT,
   DB_USER,
   HOST,
-  NEXTCLOUD_CLIENT_ID,
-  NEXTCLOUD_CLIENT_SECRET,
-  NEXTCLOUD_URL,
   PORT,
   RUNNING_WITH_TLS,
   SESSION_SECRET,
@@ -26,9 +23,6 @@ test('all env variables should be initialized', () => {
   expect(DB_PORT).toBeDefined();
   expect(DB_USER).toBeDefined();
   expect(HOST).toBeDefined();
-  expect(NEXTCLOUD_CLIENT_ID).toBeDefined();
-  expect(NEXTCLOUD_CLIENT_SECRET).toBeDefined();
-  expect(NEXTCLOUD_URL).toBeDefined();
   expect(PORT).toBeDefined();
   expect(RUNNING_WITH_TLS).toBeDefined();
   expect(SESSION_SECRET).toBeDefined();

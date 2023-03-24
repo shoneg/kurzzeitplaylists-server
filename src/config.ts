@@ -41,10 +41,8 @@ export const GLOBAL_DEBUG = (() => {
   }
 })();
 export const HOST = getEnvVariable('HOST', 'localhost');
-export const NEXTCLOUD_CLIENT_ID = getEnvVariable('NEXTCLOUD_CLIENT_ID');
-export const NEXTCLOUD_CLIENT_SECRET = getEnvVariable('NEXTCLOUD_CLIENT_SECRET');
-export const NEXTCLOUD_URL = getEnvVariable('NEXTCLOUD_URL');
 export const PORT = parseInt(getEnvVariable('PORT', '8888'));
+export const PROXY_PORT = parseInt(getEnvVariable('PROXY_PORT', PORT.toString()));
 export const RUNNING_WITH_TLS = parseBoolean(getEnvVariable('RUNNING_WITH_TLS', 'true') as 'true' | 'false');
 export const SESSION_SECRET = getEnvVariable('SESSION_SECRET');
 export const SESSION_TIMEOUT = parseInt(getEnvVariable('SESSION_TIMEOUT', '300'));

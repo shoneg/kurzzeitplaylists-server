@@ -1,7 +1,6 @@
 import { RequestHandler } from 'express';
 import DB from '../../db';
 import { User } from '../../types';
-import { parse as parseUseragent } from 'express-useragent';
 
 export const authView: RequestHandler = (req, res) => {
   if (req.user) {
@@ -44,19 +43,4 @@ export const deleteAccount: RequestHandler = (req, res, next) => {
       )
       .catch(next);
   }
-};
-
-export const renderNextcloudLoginView: RequestHandler = (req, res) => res.render('nextcloudLogin.html');
-export const onNextcloudLogin: RequestHandler = (req, res) => {
-  const { headers } = req;
-  const token = User.addWaitFor();
-  const useragent = headers['user-agent'];
-  // if (useragent) {
-  //   const browserInfo = parseUseragent(useragent);
-  //   if (browserInfo.isFirefox) {
-  //     res.redirect('/auth/login?token=' + token);
-  //     return;
-  //   }
-  // }
-  res.render('nextcloudLogin.html', { url: '/auth/login?token=' + token });
 };
