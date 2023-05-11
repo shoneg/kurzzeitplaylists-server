@@ -24,24 +24,22 @@ export const strategy = new SpotifyStrategy(
     process.nextTick(() => {
       db.user
         .exist(profile.id)
-        .then((isUser) => {
-          if (isUser) {
-            const loadedUser = isUser;
+        .then((loadedUser) => {
+          const { displayName, id } = profile;
+          const expiresAt = moment().add(expires_in, 's');
+          const newUser: User = new User([accessToken, expiresAt, refreshToken, id], displayName, id);
+          if (loadedUser) {
             if (loadedUser.credentials.expiresAt.isBefore(moment().add(30, 's'))) {
-              loadedUser
-                .refreshCredentials()
+              db.user.update(newUser)
                 .then((updatedUser) => done(null, updatedUser))
                 .catch(done);
             } else {
-              done(null, isUser);
+              done(null, loadedUser);
             }
           } else {
-            const { displayName, id } = profile;
-            const expiresAt = moment().add(expires_in, 's');
-            const user: User = new User([accessToken, expiresAt, refreshToken, id], displayName, id);
             db.user
-              .insert(user)
-              .then(() => done(null, user))
+              .insert(newUser)
+              .then(() => done(null, newUser))
               .catch(() => done(new Error('registration failed')));
           }
         })
