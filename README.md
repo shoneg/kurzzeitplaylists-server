@@ -3,3 +3,4 @@
 ## todo list
 
 - optional stay logged in option
+- spotify theming
