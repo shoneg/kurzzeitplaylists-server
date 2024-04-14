@@ -20,7 +20,7 @@
     "express-session": "^1.17.3",
     "express-useragent": "^1.0.15",
     "moment": "^2.29.4",
-    "mysql2": "^2.3.3",
+    "mysql2": "^3.9.4",
     "nunjucks": "^3.2.3",
     "passport": "^0.6.0",
     "passport-oauth2": "^1.6.1",

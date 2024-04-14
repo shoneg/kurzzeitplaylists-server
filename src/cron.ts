@@ -29,10 +29,10 @@ const addTracks = (
     spotify
       .addTracksToPlaylist(playlistId, tracks)
       .then((result) => {
-        if (result.statusCode === 201) {
+        if (result.statusCode === 201 || result.statusCode === 200) {
           res();
         } else {
-          logger.error('Got an error while adding tracks to playlist:', result.body);
+          logger.error('Got an error while adding tracks to playlist:', result);
           rej('Got error while adding tracks to playlist');
         }
       })
@@ -54,7 +54,7 @@ const removeTracks = (
         if (removingResponse.statusCode === 200) {
           res();
         } else {
-          logger.error('Got an error while removing tracks from playlist:', removingResponse.body);
+          logger.error('Got an error while removing tracks from playlist:', removingResponse);
           rej('Got an error while removing tracks from playlist');
         }
       })
@@ -96,9 +96,9 @@ export const trackDeletion = () => {
                       p
                         .refresh(c, true)
                         .then(() => res())
-                        .catch(rej)
+                        .catch(() => rej())
                     )
-                    .catch(rej);
+                    .catch(() => rej());
                 if (p.discardPlaylist) {
                   addTracks(
                     spotify,
@@ -106,12 +106,12 @@ export const trackDeletion = () => {
                     tooOldUris.map((u) => u.uri)
                   )
                     .then(getRemovePromise)
-                    .catch(rej);
+                    .catch(() => rej());
                 } else {
                   getRemovePromise();
                 }
               })
-              .catch(rej);
+              .catch(() => rej());
           });
         });
       });
@@ -124,7 +124,7 @@ export const trackDeletion = () => {
 
 const cron = () => {
   setInterval(refreshSessions, d(30, 'm'));
-  setInterval(trackDeletion, d(1, 'h'));
+  setInterval(trackDeletion, d(1, 'm'));
 };
 
 export default cron;

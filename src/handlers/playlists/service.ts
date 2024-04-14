@@ -13,7 +13,15 @@ const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; d
   return new Promise<{ newPlaylists: number; deletedPlaylists: number }>((res, rej) => {
     Playlist.getMany(0, 50, spotify)
       .then((spotifyPlaylists) => {
-        const usersOwnPlaylists = spotifyPlaylists.filter((p) => p.owner.id === user.spotifyId);
+        const usersOwnPlaylists = spotifyPlaylists
+          .filter((p) => p.owner.id === user.spotifyId)
+          .filter((p, i, ps) => {
+            const ret = ps.findIndex((o) => o.id === p.id) === i;
+            if (!ret) {
+              logger.warn(`The user ${user.displayName} has two playlists with the id=${p.id} ("${p.name}")`);
+            }
+            return ret;
+          });
         const insertPromise = new Promise<number>((res, rej) => {
           db.playlist
             .filterUnknown(usersOwnPlaylists)
@@ -98,7 +106,6 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
     )
     .catch(next);
 };
-
 
 export const submitEditPlaylist: RequestHandler = (req, res, next) => {
   const { id } = req.params;
