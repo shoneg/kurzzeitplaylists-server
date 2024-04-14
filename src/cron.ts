@@ -90,6 +90,10 @@ export const trackDeletion = () => {
                 const tooOldUris = remove.map((t) => ({ uri: t.track?.uri })).filter((t) => t.uri !== undefined) as {
                   uri: string;
                 }[];
+                if (tooOldUris.length === 0) {
+                  res();
+                  return;
+                }
                 const getRemovePromise = () =>
                   removeTracks(spotify, p.spotifyId, tooOldUris)
                     .then(() =>
@@ -105,7 +109,7 @@ export const trackDeletion = () => {
                     p.discardPlaylist,
                     tooOldUris.map((u) => u.uri)
                   )
-                    .then(getRemovePromise)
+                    .then(() => getRemovePromise())
                     .catch(() => rej());
                 } else {
                   getRemovePromise();
@@ -124,7 +128,7 @@ export const trackDeletion = () => {
 
 const cron = () => {
   setInterval(refreshSessions, d(30, 'm'));
-  setInterval(trackDeletion, d(1, 'm'));
+  setInterval(trackDeletion, d(1, 'h'));
 };
 
 export default cron;
