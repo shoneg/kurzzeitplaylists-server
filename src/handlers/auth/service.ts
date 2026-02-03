@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import DB from '../../db';
 import { User } from '../../types';
+import { buildClientRedirectUrl, CLIENT_POST_LOGIN_PATH, CLIENT_POST_LOGOUT_PATH } from '../../config';
 
 export const authView: RequestHandler = (req, res) => {
   if (req.user) {
@@ -15,12 +16,13 @@ export const logout: RequestHandler = (req, res, next) => {
     if (e) {
       next(e);
     } else {
-      res.redirect('/');
+      res.redirect(buildClientRedirectUrl(CLIENT_POST_LOGOUT_PATH));
     }
   });
 };
 
-export const onLogin: RequestHandler = (req, res) => res.redirect('/');
+export const onLogin: RequestHandler = (req, res) =>
+  res.redirect(buildClientRedirectUrl(CLIENT_POST_LOGIN_PATH));
 
 export const deleteView: RequestHandler = (req, res) => res.render('delete.html');
 
@@ -37,10 +39,10 @@ export const deleteAccount: RequestHandler = (req, res, next) => {
           if (e) {
             next(e);
           } else {
-            res.redirect('/');
-          }
-        })
-      )
-      .catch(next);
+          res.redirect(buildClientRedirectUrl(CLIENT_POST_LOGOUT_PATH));
+        }
+      })
+    )
+    .catch(next);
   }
 };

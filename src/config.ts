@@ -1,6 +1,16 @@
 import { config } from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
-config();
+const resolveEnvPath = (): string | undefined => {
+  const candidates = [
+    path.resolve(__dirname, '..', '.env'),
+    path.resolve(process.cwd(), '.env'),
+  ];
+  return candidates.find((candidate) => fs.existsSync(candidate));
+};
+
+config({ path: resolveEnvPath() });
 
 const ENV = process.env;
 
@@ -46,7 +56,29 @@ export const PROXY_PORT = parseInt(getEnvVariable('PROXY_PORT', PORT.toString())
 export const RUNNING_WITH_TLS = parseBoolean(getEnvVariable('RUNNING_WITH_TLS', 'true') as 'true' | 'false');
 export const SESSION_SECRET = getEnvVariable('SESSION_SECRET');
 export const SESSION_TIMEOUT = parseInt(getEnvVariable('SESSION_TIMEOUT', '300'));
+export const CLIENT_APP_URL = getEnvVariable('CLIENT_APP_URL', '');
+export const CLIENT_POST_LOGIN_PATH = getEnvVariable('CLIENT_POST_LOGIN_PATH', '/playlists');
+export const CLIENT_POST_LOGOUT_PATH = getEnvVariable('CLIENT_POST_LOGOUT_PATH', '/');
 export const URI = (() => {
   const uri = getEnvVariable('URI', 'false');
   return uri === 'false' ? false : uri;
 })();
+
+const ensureLeadingSlash = (value: string): string => {
+  if (!value) {
+    return '/';
+  }
+  return value.startsWith('/') ? value : `/${value}`;
+};
+
+export const buildClientRedirectUrl = (path: string): string => {
+  const normalizedPath = ensureLeadingSlash(path);
+  if (!CLIENT_APP_URL) {
+    return normalizedPath;
+  }
+  try {
+    return new URL(normalizedPath, CLIENT_APP_URL).toString();
+  } catch (err) {
+    return normalizedPath;
+  }
+};

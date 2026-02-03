@@ -112,14 +112,22 @@ class Playlist {
   }
 
   update(
-    playlist: Pick<AppPlaylist, 'spotifyId'> & Partial<Omit<AppPlaylist, 'spotifyId'>>,
+    playlist: Pick<AppPlaylist, 'spotifyId'> &
+      Partial<Omit<AppPlaylist, 'spotifyId' | 'discardPlaylist' | 'maxTrackAge' | 'maxTracks'>> & {
+        discardPlaylist?: string | null;
+        maxTrackAge?: number | null;
+        maxTracks?: number | null;
+      },
     user?: { spotifyId: string } | string
   ): Promise<AppPlaylist> {
     const { discardPlaylist, maxTrackAge, maxTracks, name, numberOfTracks, oldestTrack, spotifyId } = playlist;
-    if (discardPlaylist || maxTrackAge || maxTracks || name || numberOfTracks || oldestTrack) {
+    const shouldUpdate = [discardPlaylist, maxTrackAge, maxTracks, name, numberOfTracks, oldestTrack].some(
+      (value) => value !== undefined
+    );
+    if (shouldUpdate) {
       const userId = typeof user == 'string' ? user : user?.spotifyId;
       let query = 'UPDATE playlist SET ';
-      let values: (string | Date)[] = [];
+      let values: (string | Date | number | null)[] = [];
       (
         [
           { v: discardPlaylist, n: 'discardPlaylist' },
@@ -128,7 +136,7 @@ class Playlist {
           { v: name, n: 'name' },
           { v: numberOfTracks, n: 'numberOfTracks' },
           { v: oldestTrack?.toDate(), n: 'oldestTrack' },
-        ] as { v: string | Date; n: string }[]
+        ] as { v: string | Date | number | null | undefined; n: string }[]
       ).forEach(({ v, n }) => {
         if (v !== undefined) {
           query += n + ' = ?, ';

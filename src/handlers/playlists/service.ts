@@ -7,7 +7,7 @@ import Logger, { DEBUG } from '../../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
-const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; deletedPlaylists: number }> => {
+export const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; deletedPlaylists: number }> => {
   const db = DB.getInstance();
   const spotify = getSpotify(user);
   return new Promise<{ newPlaylists: number; deletedPlaylists: number }>((res, rej) => {
