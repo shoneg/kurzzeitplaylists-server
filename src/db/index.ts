@@ -1,7 +1,8 @@
 import { readFile } from 'fs';
-import { Store } from 'express-session';
+import session, { Store } from 'express-session';
 import moment from 'moment';
 import mysql, { FieldPacket, OkPacket, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import type { Pool as MysqlPool } from 'mysql2';
 import MySQLSession from 'express-mysql-session';
 
 import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, SESSION_TIMEOUT } from '../config';
@@ -13,7 +14,7 @@ import Playlist from './playlist';
 
 const logger = new Logger(DEBUG.WARN, '/db');
 
-const MySQLStore = MySQLSession(require('express-session'));
+const MySQLStore = MySQLSession(session);
 
 class DB {
   private static instance: DB;
@@ -91,14 +92,19 @@ class DB {
 
   public getSessionStore(): Store {
     if (!DB.sessionStore) {
-      DB.sessionStore = new MySQLStore(
+      const store = new MySQLStore(
         {
           checkExpirationInterval: moment.duration(60, 's').asMilliseconds(),
           expiration: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
         },
-        this.pool,
-        (err) => err && logger.error('Got error while init of sessionStore:', err)
+        this.pool as unknown as MysqlPool
       );
+      if (typeof (store as unknown as { on?: (evt: string, cb: (err: Error) => void) => void }).on === 'function') {
+        (store as unknown as { on: (evt: string, cb: (err: Error) => void) => void }).on('error', (err) => {
+          logger.error('Got error while init of sessionStore:', err);
+        });
+      }
+      DB.sessionStore = store as Store;
     }
     return DB.sessionStore;
   }

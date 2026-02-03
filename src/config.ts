@@ -40,7 +40,7 @@ export const GLOBAL_DEBUG = (() => {
     return parseInt(d);
   }
 })();
-export const HOST = getEnvVariable('HOST', 'localhost');
+export const HOST = getEnvVariable('HOST', '127.0.0.1');
 export const PORT = parseInt(getEnvVariable('PORT', '8888'));
 export const PROXY_PORT = parseInt(getEnvVariable('PROXY_PORT', PORT.toString()));
 export const RUNNING_WITH_TLS = parseBoolean(getEnvVariable('RUNNING_WITH_TLS', 'true') as 'true' | 'false');
