@@ -36,26 +36,28 @@ class SpotifyCredentials {
   }
 
   //* methods
-  public refresh(): Promise<void> {
-    const db = DB.getInstance();
-    return new Promise<void>((res, rej) => {
-      getSpotify(this)
-        .refreshAccessToken()
-        .then((refreshResult) => {
-          const { access_token, refresh_token, expires_in } = refreshResult.body;
-          this._accessToken = access_token;
-          this._expiresAt = moment().add(expires_in, 's');
-          if (refresh_token) this._refreshToken = refresh_token;
-          db.credentials
-            .update(this, this._spotifyId)
-            .then(() => res())
-            .catch(rej);
-        })
-        .catch((err) => {
-          logger.error(`While refreshing access token of user with id='${this._spotifyId}', we got an error:`, err);
-          rej(err);
-        });
-    });
+  public refresh(deps?: {
+    db?: DB;
+    spotify?: ReturnType<typeof getSpotify>;
+    spotifyFactory?: typeof getSpotify;
+    now?: Moment;
+  }): Promise<void> {
+    const db = deps?.db ?? DB.getInstance();
+    const spotify = deps?.spotify ?? (deps?.spotifyFactory ? deps.spotifyFactory(this) : getSpotify(this));
+    const now = deps?.now ?? moment();
+    return spotify
+      .refreshAccessToken()
+      .then((refreshResult) => {
+        const { access_token, refresh_token, expires_in } = refreshResult.body;
+        this._accessToken = access_token;
+        this._expiresAt = now.clone().add(expires_in, 's');
+        if (refresh_token) this._refreshToken = refresh_token;
+        return db.credentials.update(this, this._spotifyId).then(() => undefined);
+      })
+      .catch((err) => {
+        logger.error(`While refreshing access token of user with id='${this._spotifyId}', we got an error:`, err);
+        return Promise.reject(err);
+      });
   }
 }
 

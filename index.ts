@@ -8,6 +8,7 @@ import rootRouter from './src/handlers';
 import DB from './src/db';
 import { QueryError } from 'mysql2';
 import cron from './src/cron';
+import { User } from './src/types';
 
 const logger = new Logger(DEBUG.INFO, 'index');
 
@@ -44,6 +45,7 @@ app.set('view engine', 'html');
 app.set('trust proxy', 1)
 
 initPassport();
+User.startWaitingForCleanup();
 
 app.engine('html', consolidate.nunjucks);
 

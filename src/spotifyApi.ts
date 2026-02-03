@@ -57,28 +57,23 @@ export const getSpotify = (arg: { accessToken: string; refreshToken: string } | 
     refreshToken: (arg as User).credentials?.refreshToken || (arg as { refreshToken: string }).refreshToken,
   });
 
-export const refreshAllSessions = (expireBefore = moment()): Promise<void> => {
-  const db = DB.getInstance();
-  return new Promise<void>((res, rej) => {
-    db.credentials
-      .getAllExpiresBefore(expireBefore)
-      .then((credentials) => {
-        const refreshPromises = credentials.map((c) => c.refresh());
-        Promise.all(refreshPromises)
-          .then(() => {
-            logger.info(
-              `All user credentials, that expires before ${expireBefore.toISOString()} were successfully refreshed.`
-            );
-            res();
-          })
-          .catch((err) => {
-            logger.warn('While refreshing user credentials we got an err:', err);
-            rej();
-          });
-      })
-      .catch((err) => {
-        logger.warn('Got an error while getting users, whose credentials should be refreshed:', err);
-        rej();
+export const refreshAllSessions = (
+  expireBefore = moment(),
+  deps?: { db?: DB }
+): Promise<void> => {
+  const db = deps?.db ?? DB.getInstance();
+  return db.credentials
+    .getAllExpiresBefore(expireBefore)
+    .then((credentials) => {
+      const refreshPromises = credentials.map((c) => c.refresh({ db }));
+      return Promise.all(refreshPromises).then(() => {
+        logger.info(
+          `All user credentials, that expires before ${expireBefore.toISOString()} were successfully refreshed.`
+        );
       });
-  });
+    })
+    .catch((err) => {
+      logger.warn('While refreshing user credentials we got an err:', err);
+      return Promise.reject(err);
+    });
 };

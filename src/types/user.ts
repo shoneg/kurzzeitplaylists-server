@@ -9,6 +9,7 @@ const logger = new Logger(DEBUG.WARN, '/types/user');
 
 class User {
   private static waitingFor: { timestamp: Date; token: string }[] = [];
+  private static waitingForCleanupTimer: NodeJS.Timeout | undefined;
   private _credentials: SpotifyCredentials;
   private _displayName: string;
   private _spotifyId: string;
@@ -29,14 +30,21 @@ class User {
     return this._spotifyId;
   }
 
-  static {
-    setInterval(() => {
-      this.waitingFor.forEach((elm, index) => {
-        if (moment(elm.timestamp).isBefore(moment().add(30, 's'))) {
-          delete this.waitingFor[index];
-        }
-      });
+  public static startWaitingForCleanup(): void {
+    if (this.waitingForCleanupTimer) {
+      return;
+    }
+    this.waitingForCleanupTimer = setInterval(() => {
+      const cutoff = moment().subtract(30, 's');
+      this.waitingFor = this.waitingFor.filter((elm) => moment(elm.timestamp).isAfter(cutoff));
     }, moment.duration(60, 's').asMilliseconds());
+  }
+
+  public static stopWaitingForCleanup(): void {
+    if (this.waitingForCleanupTimer) {
+      clearInterval(this.waitingForCleanupTimer);
+      this.waitingForCleanupTimer = undefined;
+    }
   }
 
   // * constructors
@@ -71,22 +79,18 @@ class User {
     return _token;
   };
   public static isInWaitingFor = (token: string): boolean => {
-    const i = this.waitingFor.map((w) => w.token).indexOf(token);
-    if (i) {
-      delete this.waitingFor[i];
+    const i = this.waitingFor.findIndex((w) => w.token === token);
+    if (i >= 0) {
+      this.waitingFor.splice(i, 1);
+      return true;
     }
-    return i >= 0;
+    return false;
   };
 
   //* methods
-  public refreshCredentials(): Promise<User> {
-    const db = DB.getInstance();
-    return new Promise<User>((res, rej) => {
-      this._credentials
-        .refresh()
-        .then(() => db.user.get(this._spotifyId).then(res).catch(rej))
-        .catch(rej);
-    });
+  public refreshCredentials(deps?: { db?: DB }): Promise<User> {
+    const db = deps?.db ?? DB.getInstance();
+    return this._credentials.refresh({ db }).then(() => db.user.get(this._spotifyId));
   }
 }
 

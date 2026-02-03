@@ -77,6 +77,7 @@ class DB {
       readFile('src/db/createDb.sql', (readFileErr, creationScript) => {
         if (readFileErr) {
           rej(readFileErr);
+          return;
         }
         const creationPromises = creationScript
           .toString()

@@ -107,31 +107,30 @@ class Playlist {
     limit = 50,
     itemFields = 'added_at'
   ): Promise<SpotifyApi.PlaylistTrackObject[]> => {
-    return new Promise<SpotifyApi.PlaylistTrackObject[]>((res, rej) => {
-      spotify
-        .getPlaylistTracks(id, { offset, limit, fields: `items(${itemFields}),next` })
-        .then((result) => {
-          if (result.statusCode !== 200) {
-            const body = result.body as { error?: { status?: number; message?: string } | undefined };
-            rej(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
-          }
-          const nextURL = result.body.next;
-          if (nextURL) {
-            const nextOffset = new URL(nextURL).searchParams.get('offset');
-            const nextLimit = new URL(nextURL).searchParams.get('limit');
-            if (nextOffset && nextLimit) {
-              this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit), itemFields)
-                .then((nextResult) => res(nextResult.concat(result.body.items)))
-                .catch(rej);
-            } else {
-              rej(`nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`);
-            }
-          } else {
-            res(result.body.items);
-          }
-        })
-        .catch(rej);
-    });
+    return spotify
+      .getPlaylistTracks(id, { offset, limit, fields: `items(${itemFields}),next` })
+      .then((result) => {
+        if (result.statusCode !== 200) {
+          const body = result.body as { error?: { status?: number; message?: string } | undefined };
+          return Promise.reject(
+            `Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`
+          );
+        }
+        const nextURL = result.body.next;
+        if (!nextURL) {
+          return result.body.items;
+        }
+        const nextOffset = new URL(nextURL).searchParams.get('offset');
+        const nextLimit = new URL(nextURL).searchParams.get('limit');
+        if (!nextOffset || !nextLimit) {
+          return Promise.reject(
+            `nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`
+          );
+        }
+        return this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit), itemFields).then((nextResult) =>
+          nextResult.concat(result.body.items)
+        );
+      });
   };
 
   public static compareLexicographic(p1: Playlist, p2: Playlist): number {
@@ -139,12 +138,11 @@ class Playlist {
   }
 
   public static sortLexicographic(playlists: Playlist[], order: 'az' | 'za'): Playlist[] {
-    const az = playlists.sort(this.compareLexicographic);
-    if ((order = 'az')) {
+    const az = [...playlists].sort(this.compareLexicographic);
+    if (order === 'az') {
       return az;
     }
-    const za = az.reverse();
-    return za;
+    return az.reverse();
   }
 
   public static fromApiObj(simplePlaylist: SpotifyApi.PlaylistObjectSimplified, oldestTrackValue = moment()): Playlist {
@@ -164,30 +162,25 @@ class Playlist {
     limit = 50,
     spotify: SpotifyWebApi
   ): Promise<SpotifyApi.PlaylistObjectSimplified[]> => {
-    return new Promise<SpotifyApi.PlaylistObjectSimplified[]>((res, rej) => {
-      spotify
-        .getUserPlaylists({ offset, limit })
-        .then((result) => {
-          if (result.statusCode !== 200) {
-            const body = result.body as { error?: { status?: number; message?: string } | undefined };
-            rej(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
-          }
-          const nextURL = result.body.next;
-          if (nextURL) {
-            const nextOffset = new URL(nextURL).searchParams.get('offset');
-            const nextLimit = new URL(nextURL).searchParams.get('limit');
-            if (nextOffset && nextLimit) {
-              this.getMany(parseInt(nextOffset), parseInt(nextLimit), spotify)
-                .then((nextResult) => res(nextResult.concat(result.body.items)))
-                .catch(rej);
-            } else {
-              rej(`nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`);
-            }
-          } else {
-            res(result.body.items);
-          }
-        })
-        .catch(rej);
+    return spotify.getUserPlaylists({ offset, limit }).then((result) => {
+      if (result.statusCode !== 200) {
+        const body = result.body as { error?: { status?: number; message?: string } | undefined };
+        return Promise.reject(`Got statusCode=${result.statusCode} from spotify with message='${body?.error?.message}'`);
+      }
+      const nextURL = result.body.next;
+      if (!nextURL) {
+        return result.body.items;
+      }
+      const nextOffset = new URL(nextURL).searchParams.get('offset');
+      const nextLimit = new URL(nextURL).searchParams.get('limit');
+      if (!nextOffset || !nextLimit) {
+        return Promise.reject(
+          `nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`
+        );
+      }
+      return this.getMany(parseInt(nextOffset), parseInt(nextLimit), spotify).then((nextResult) =>
+        nextResult.concat(result.body.items)
+      );
     });
   };
 
@@ -195,45 +188,38 @@ class Playlist {
   public refresh(credentials: SpotifyCredentials, includeOldestTrack = false): Promise<Playlist> {
     const spotify = getSpotify(credentials);
     const db = DB.getInstance();
-    return new Promise<Playlist>((res, rej) => {
-      spotify
-        .getPlaylist(this._spotifyId, {
-          fields: `name,tracks(total${includeOldestTrack ? ',items(added_at),next' : ''})`,
-        })
-        .then((data) => {
-          const { name, tracks } = data.body;
-          const { total, items, next } = tracks;
-          let allItems = items;
-          if (next) {
-            const nextOffset = new URL(next).searchParams.get('offset');
-            const nextLimit = new URL(next).searchParams.get('limit');
-            if (nextOffset && nextLimit) {
-              Playlist.getTracks(spotify, this._spotifyId, parseInt(nextOffset), parseInt(nextLimit))
-                .then((nextResult) => (allItems = allItems.concat(nextResult)))
-                .catch(rej);
+    return spotify
+      .getPlaylist(this._spotifyId, {
+        fields: `name,tracks(total${includeOldestTrack ? ',items(added_at),next' : ''})`,
+      })
+      .then(async (data) => {
+        const { name, tracks } = data.body;
+        const { total, items, next } = tracks;
+        let allItems = items;
+        if (next) {
+          const nextOffset = new URL(next).searchParams.get('offset');
+          const nextLimit = new URL(next).searchParams.get('limit');
+          if (nextOffset && nextLimit) {
+            const moreItems = await Playlist.getTracks(spotify, this._spotifyId, parseInt(nextOffset), parseInt(nextLimit));
+            allItems = allItems.concat(moreItems);
+          }
+        }
+        let oldestTrackDate: Moment = moment();
+        if (includeOldestTrack) {
+          allItems.forEach((i) => {
+            const addedAt = moment(i.added_at);
+            if (addedAt.isBefore(oldestTrackDate)) {
+              oldestTrackDate = addedAt;
             }
-          }
-          let oldestTrackDate: Moment = moment();
-          if (includeOldestTrack) {
-            allItems.forEach((i) => {
-              const addedAt = moment(i.added_at);
-              if (addedAt.isBefore(oldestTrackDate)) {
-                oldestTrackDate = addedAt;
-              }
-            });
-          }
-          db.playlist
-            .update({
-              spotifyId: this._spotifyId,
-              name: name !== this._name ? name : undefined,
-              numberOfTracks: total !== this._numberOfTracks ? total : undefined,
-              oldestTrack: includeOldestTrack ? oldestTrackDate : undefined,
-            })
-            .then(res)
-            .catch(rej);
-        })
-        .catch(rej);
-    });
+          });
+        }
+        return db.playlist.update({
+          spotifyId: this._spotifyId,
+          name: name !== this._name ? name : undefined,
+          numberOfTracks: total !== this._numberOfTracks ? total : undefined,
+          oldestTrack: includeOldestTrack ? oldestTrackDate : undefined,
+        });
+      });
   }
 }
 
