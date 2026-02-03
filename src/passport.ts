@@ -1,4 +1,5 @@
 import session from 'express-session';
+import type { RequestHandler } from 'express';
 import moment from 'moment';
 import passport from 'passport';
 import { app } from '..';
@@ -34,10 +35,10 @@ export const initPassport: () => void = () => {
       secret: SESSION_SECRET,
       store: dbSessionStore,
       unset: 'destroy',
-    })
+    }) as RequestHandler
   );
 
-  app.use(passport.initialize());
-  app.use(passport.session());
+  app.use(passport.initialize() as RequestHandler);
+  app.use(passport.session() as RequestHandler);
   logger.info('Init of passport done');
 };

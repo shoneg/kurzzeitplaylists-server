@@ -9,8 +9,8 @@ import { authErrorHandler, spotifyErrorHandler } from './errorHandlers';
 const rootRouter = Router();
 
 rootRouter.use(bodyParser.urlencoded({ extended: true }));
-rootRouter.all('*', logging);
-rootRouter.all('*', reroute)
+rootRouter.use(logging);
+rootRouter.use(reroute);
 
 rootRouter.get('/', (req, res) => {
   if (!req.user) {
@@ -22,7 +22,7 @@ rootRouter.get('/', (req, res) => {
 
 rootRouter.use('/auth', authRouter);
 rootRouter.use('/playlists', ensureAuthenticated, playlistRouter);
-rootRouter.all('*', falsePathErrorView);
+rootRouter.use(falsePathErrorView);
 rootRouter.use(authErrorHandler);
 rootRouter.use(spotifyErrorHandler);
 
