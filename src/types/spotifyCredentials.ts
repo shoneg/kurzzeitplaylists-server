@@ -5,6 +5,9 @@ import Logger, { DEBUG } from '../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/types/spotifyCredentials');
 
+/**
+ * Spotify OAuth credentials with refresh support.
+ */
 class SpotifyCredentials {
   private _accessToken: string;
   private _expiresAt: Moment;
@@ -36,6 +39,9 @@ class SpotifyCredentials {
   }
 
   //* methods
+  /**
+   * Refresh the access token and persist it.
+   */
   public refresh(deps?: {
     db?: DB;
     spotify?: ReturnType<typeof getSpotify>;

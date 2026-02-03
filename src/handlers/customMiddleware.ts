@@ -6,10 +6,14 @@ import Logger, { DEBUG } from '../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, 'customMiddleware');
 
+/**
+ * Ensure the request has a valid authenticated user session.
+ */
 export const ensureAuthenticated: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated()) {
     const user = User.fromExpress(req.user);
     if (moment(user.credentials.expiresAt).isBefore(moment().add(15, 's'))) {
+      // Proactively refresh tokens to avoid user-visible failures.
       user.refreshCredentials().then((updatedUser) => {
         req.user = updatedUser;
         return next();
@@ -22,6 +26,9 @@ export const ensureAuthenticated: RequestHandler = (req, res, next) => {
   }
 };
 
+/**
+ * Ensure a valid Nextcloud token was provided during login.
+ */
 export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
   const { token } = req.query;
   if (!token) {
@@ -33,6 +40,9 @@ export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
   }
 };
 
+/**
+ * Reroute requests to the canonical host when `URI` is configured.
+ */
 export const reroute: RequestHandler = (req, res, next) => {
   const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
   if (URI && new URL(URI).host !== url.host) {
@@ -42,6 +52,9 @@ export const reroute: RequestHandler = (req, res, next) => {
   }
 };
 
+/**
+ * Log each incoming request for visibility while developing.
+ */
 export const logging: RequestHandler = (req, res, next) => {
   logger.log(`requested ${req.method} '${req.originalUrl}'`);
   next();

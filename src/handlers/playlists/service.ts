@@ -7,6 +7,9 @@ import Logger, { DEBUG } from '../../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
+/**
+ * Sync the user's playlists against Spotify and return counts of changes.
+ */
 export const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: number; deletedPlaylists: number }> => {
   const db = DB.getInstance();
   const spotify = getSpotify(user);
@@ -16,6 +19,7 @@ export const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: nu
         const usersOwnPlaylists = spotifyPlaylists
           .filter((p) => p.owner.id === user.spotifyId)
           .filter((p, i, ps) => {
+            // De-duplicate playlists with the same ID to prevent DB conflicts.
             const ret = ps.findIndex((o) => o.id === p.id) === i;
             if (!ret) {
               logger.warn(`The user ${user.displayName} has two playlists with the id=${p.id} ("${p.name}")`);
@@ -59,6 +63,9 @@ export const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: nu
   });
 };
 
+/**
+ * Render the server-side playlists view (legacy UI).
+ */
 export const playlistsView: RequestHandler = (req, res, next) => {
   const db = DB.getInstance();
   const user = User.fromExpress(req.user as Express.User);
@@ -74,6 +81,9 @@ export const playlistsView: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Render the playlist edit screen (legacy UI).
+ */
 export const editPlaylistView: RequestHandler = (req, res, next) => {
   const { id } = req.params;
   const user = User.fromExpress(req.user as Express.User);
@@ -107,6 +117,9 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Persist updated playlist cleanup settings.
+ */
 export const submitEditPlaylist: RequestHandler = (req, res, next) => {
   const { id } = req.params;
   const user = User.fromExpress(req.user as Express.User);
@@ -131,6 +144,9 @@ export const submitEditPlaylist: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Sync playlists and redirect with the result counts (legacy UI).
+ */
 export const recognize: RequestHandler = (req, res, next) => {
   recognizePlaylistsOfUser(User.fromExpress(req.user as Express.User))
     .then(({ newPlaylists, deletedPlaylists }) =>

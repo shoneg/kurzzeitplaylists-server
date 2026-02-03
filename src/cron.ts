@@ -7,11 +7,17 @@ import Logger, { DEBUG } from './utils/logger';
 
 const logger = new Logger(DEBUG.INFO, '/cron');
 
+/**
+ * Convert a moment duration to milliseconds.
+ */
 const d: (inp: Parameters<typeof moment.duration>[0], unit: Parameters<typeof moment.duration>[1]) => number = (
   inp,
   unit
 ) => moment.duration(inp, unit).asMilliseconds();
 
+/**
+ * Refresh tokens that are close to expiring.
+ */
 const refreshSessions = () => {
   logger.info('Start token refreshing');
   const expiresBefore = moment().subtract(6, 'h');
@@ -20,6 +26,9 @@ const refreshSessions = () => {
     .catch(() => {});
 };
 
+/**
+ * Add tracks to a playlist and normalize response handling.
+ */
 const addTracks = (
   spotify: SpotifyWebApi,
   playlistId: string,
@@ -42,6 +51,9 @@ const addTracks = (
   });
 };
 
+/**
+ * Remove tracks from a playlist and normalize response handling.
+ */
 const removeTracks = (
   spotify: SpotifyWebApi,
   playlistId: string,
@@ -64,6 +76,9 @@ const removeTracks = (
   });
 };
 
+/**
+ * Periodic cleanup for playlists that exceed configured limits.
+ */
 export const trackDeletion = () => {
   logger.info('Start track deletion');
   const db = DB.getInstance();
@@ -82,6 +97,7 @@ export const trackDeletion = () => {
                   remove = tracks.filter((t) => moment(t.added_at).isBefore(maxAgeMoment));
                 }
                 if (p.maxTracks && tracks.length - remove.length > p.maxTracks) {
+                  // Trim oldest remaining tracks to respect the maxTracks limit.
                   const sortedRest = tracks
                     .filter((t) => !remove.includes(t))
                     .sort((a, b) => moment(a.added_at).diff(moment(b.added_at)));
@@ -126,6 +142,9 @@ export const trackDeletion = () => {
     .catch(() => {});
 };
 
+/**
+ * Start scheduled background tasks.
+ */
 const cron = () => {
   setInterval(refreshSessions, d(30, 'm'));
   setInterval(trackDeletion, d(1, 'h'));

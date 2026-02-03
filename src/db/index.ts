@@ -16,6 +16,9 @@ const logger = new Logger(DEBUG.WARN, '/db');
 
 const MySQLStore = MySQLSession(session);
 
+/**
+ * Singleton database access layer and session store factory.
+ */
 class DB {
   private static instance: DB;
   private static sessionStore?: Store;
@@ -42,6 +45,9 @@ class DB {
     this.instance = new DB();
   }
 
+  /**
+   * Return the shared DB instance.
+   */
   public static getInstance(): DB {
     return DB.instance;
   }
@@ -56,6 +62,9 @@ class DB {
     return this._user;
   }
 
+  /**
+   * Execute a raw SQL query against the pool.
+   */
   public query<T extends RowDataPacket[][] | RowDataPacket[] | OkPacket | OkPacket[] | ResultSetHeader>(
     sql: string,
     values: any | any[] | { [param: string]: any }
@@ -63,6 +72,9 @@ class DB {
     return this.pool.query<T>(sql, values);
   }
 
+  /**
+   * Smoke-test the DB connection.
+   */
   public testConnection(): Promise<boolean> {
     return new Promise<boolean>((res) =>
       this.pool
@@ -72,6 +84,9 @@ class DB {
     );
   }
 
+  /**
+   * Create schema if missing using `src/db/createDb.sql`.
+   */
   public crateDbIfNotExist(): Promise<void> {
     return new Promise<void>((res, rej) => {
       readFile('src/db/createDb.sql', (readFileErr, creationScript) => {
@@ -91,6 +106,9 @@ class DB {
     });
   }
 
+  /**
+   * Lazily initialize the session store.
+   */
   public getSessionStore(): Store {
     if (!DB.sessionStore) {
       const store = new MySQLStore(

@@ -8,6 +8,9 @@ import SpotifyCredentials from './spotifyCredentials';
 
 const logger = new Logger(DEBUG.WARN, '/types/playlist');
 
+/**
+ * Playlist domain model with Spotify sync helpers.
+ */
 class Playlist {
   private _discardPlaylist?: string | undefined;
   private _maxTrackAge?: number | undefined;
@@ -100,6 +103,9 @@ class Playlist {
   }
 
   //* static methods
+  /**
+   * Fetch all tracks for a playlist, handling pagination.
+   */
   public static getTracks = (
     spotify: SpotifyWebApi,
     id: string,
@@ -133,10 +139,16 @@ class Playlist {
       });
   };
 
+  /**
+   * Compare playlists by name (A-Z).
+   */
   public static compareLexicographic(p1: Playlist, p2: Playlist): number {
     return p1._name.localeCompare(p2.name);
   }
 
+  /**
+   * Sort playlists lexicographically in ascending or descending order.
+   */
   public static sortLexicographic(playlists: Playlist[], order: 'az' | 'za'): Playlist[] {
     const az = [...playlists].sort(this.compareLexicographic);
     if (order === 'az') {
@@ -145,6 +157,9 @@ class Playlist {
     return az.reverse();
   }
 
+  /**
+   * Build a Playlist from Spotify's simplified playlist response.
+   */
   public static fromApiObj(simplePlaylist: SpotifyApi.PlaylistObjectSimplified, oldestTrackValue = moment()): Playlist {
     const { name, tracks, owner, id } = simplePlaylist;
     const playlist = new Playlist({
@@ -157,6 +172,9 @@ class Playlist {
     return playlist;
   }
 
+  /**
+   * Fetch all playlists for the current user, handling pagination.
+   */
   public static getMany = (
     offset = 0,
     limit = 50,
@@ -185,6 +203,9 @@ class Playlist {
   };
 
   //* methods
+  /**
+   * Refresh playlist metadata and optionally oldest track info.
+   */
   public refresh(credentials: SpotifyCredentials, includeOldestTrack = false): Promise<Playlist> {
     const spotify = getSpotify(credentials);
     const db = DB.getInstance();
@@ -206,6 +227,7 @@ class Playlist {
         }
         let oldestTrackDate: Moment = moment();
         if (includeOldestTrack) {
+          // Identify the oldest `added_at` entry across all items.
           allItems.forEach((i) => {
             const addedAt = moment(i.added_at);
             if (addedAt.isBefore(oldestTrackDate)) {

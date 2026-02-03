@@ -8,11 +8,19 @@ import Logger, { DEBUG } from './utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/spotifyApi');
 
+/** OAuth callback path registered with Spotify. */
 const authCallbackPath = Object.freeze('/auth/callback');
+/**
+ * Full redirect URI passed to Spotify for OAuth.
+ * Uses `URI` as canonical origin when configured to avoid host mismatches.
+ */
 const redirectUri = Object.freeze(
   `${URI || `${RUNNING_WITH_TLS ? 'https' : 'http'}://${HOST}:${PROXY_PORT}`}${authCallbackPath}`
 );
 
+/**
+ * Passport strategy for Spotify OAuth.
+ */
 export const strategy = new SpotifyStrategy(
   {
     clientID: CLIENT_ID,
@@ -30,6 +38,7 @@ export const strategy = new SpotifyStrategy(
           const newUser: User = new User([accessToken, expiresAt, refreshToken, id], displayName, id);
           if (loadedUser) {
             if (loadedUser.credentials.expiresAt.isBefore(moment().add(30, 's'))) {
+              // Refresh near-expiring credentials to reduce redirect loops.
               db.user.update(newUser)
                 .then((updatedUser) => done(null, updatedUser))
                 .catch(done);
@@ -48,6 +57,9 @@ export const strategy = new SpotifyStrategy(
   }
 );
 
+/**
+ * Create a Spotify API client for either a user or raw tokens.
+ */
 export const getSpotify = (arg: { accessToken: string; refreshToken: string } | User) =>
   new SpotifyWebApi({
     clientId: CLIENT_ID,
@@ -57,6 +69,9 @@ export const getSpotify = (arg: { accessToken: string; refreshToken: string } | 
     refreshToken: (arg as User).credentials?.refreshToken || (arg as { refreshToken: string }).refreshToken,
   });
 
+/**
+ * Refresh all sessions that expire before the given time.
+ */
 export const refreshAllSessions = (
   expireBefore = moment(),
   deps?: { db?: DB }

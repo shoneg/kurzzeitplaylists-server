@@ -7,6 +7,9 @@ import SpotifyCredentials from './spotifyCredentials';
 
 const logger = new Logger(DEBUG.WARN, '/types/user');
 
+/**
+ * Authenticated Spotify user plus credentials and helper utilities.
+ */
 class User {
   private static waitingFor: { timestamp: Date; token: string }[] = [];
   private static waitingForCleanupTimer: NodeJS.Timeout | undefined;
@@ -30,6 +33,9 @@ class User {
     return this._spotifyId;
   }
 
+  /**
+   * Start background cleanup for temporary login tokens.
+   */
   public static startWaitingForCleanup(): void {
     if (this.waitingForCleanupTimer) {
       return;
@@ -40,6 +46,9 @@ class User {
     }, moment.duration(60, 's').asMilliseconds());
   }
 
+  /**
+   * Stop the background cleanup timer.
+   */
   public static stopWaitingForCleanup(): void {
     if (this.waitingForCleanupTimer) {
       clearInterval(this.waitingForCleanupTimer);
@@ -63,6 +72,9 @@ class User {
   }
 
   //* static methods
+  /**
+   * Re-hydrate a User instance from the serialized Express session.
+   */
   public static fromExpress(eUser: Express.User): User {
     const { _credentials, _displayName, _spotifyId } = eUser as {
       _credentials: { _accessToken: string; _expiresAt: Date; _refreshToken: string };
@@ -73,11 +85,17 @@ class User {
     const user = new User([_accessToken, _expiresAt, _refreshToken, _spotifyId], _displayName, _spotifyId);
     return user;
   }
+  /**
+   * Register a one-time token for external login flows.
+   */
   public static addWaitFor = (token?: string): string => {
     const _token = token || randomUUID();
     this.waitingFor.push({ timestamp: new Date(), token: _token });
     return _token;
   };
+  /**
+   * Consume a one-time token if it exists.
+   */
   public static isInWaitingFor = (token: string): boolean => {
     const i = this.waitingFor.findIndex((w) => w.token === token);
     if (i >= 0) {
@@ -88,6 +106,9 @@ class User {
   };
 
   //* methods
+  /**
+   * Refresh Spotify credentials and return the latest user model.
+   */
   public refreshCredentials(deps?: { db?: DB }): Promise<User> {
     const db = deps?.db ?? DB.getInstance();
     return this._credentials.refresh({ db }).then(() => db.user.get(this._spotifyId));

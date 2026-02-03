@@ -3,11 +3,17 @@ import Logger, { DEBUG } from '../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/errorHandlers');
 
+/**
+ * Fallback error handler for unexpected failures.
+ */
 export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   logger.error('Unhandled error:', err);
   res.status(500).send('Internal server error');
 };
 
+/**
+ * Handle known authentication errors from the Spotify OAuth flow.
+ */
 export const authErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const m = err.message as string;
   if (!m || !(m.includes('login failed') || m.includes('registration failed') || m.includes('TokenError'))) {
@@ -24,6 +30,9 @@ export const authErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   }
 };
 
+/**
+ * Handle Spotify API errors in a user-friendly way.
+ */
 export const spotifyErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const m = err.message as string;
   if (!m || m.includes("Spotify's Web API")) {

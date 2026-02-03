@@ -12,6 +12,9 @@ const debug = DEBUG.WARN;
 const tag = '/passport';
 const logger = new Logger(debug, tag);
 
+/**
+ * Initialize Passport, session store, and cookie settings.
+ */
 export const initPassport: () => void = () => {
   logger.info('Start initializing passport');
   passport.serializeUser((user, done) => done(null, user));

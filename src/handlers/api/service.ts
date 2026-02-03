@@ -4,6 +4,9 @@ import DB from '../../db';
 import { Playlist, User } from '../../types';
 import { recognizePlaylistsOfUser } from '../playlists/service';
 
+/**
+ * Convert a playlist model to a client-safe summary payload.
+ */
 const toPlaylistSummary = (playlist: Playlist) => ({
   spotifyId: playlist.spotifyId,
   name: playlist.name,
@@ -13,6 +16,9 @@ const toPlaylistSummary = (playlist: Playlist) => ({
   discardPlaylist: playlist.discardPlaylist ?? null,
 });
 
+/**
+ * Return current session info for the client shell.
+ */
 export const session: RequestHandler = (req, res) => {
   if (!req.user) {
     res.json({ authenticated: false });
@@ -29,6 +35,9 @@ export const session: RequestHandler = (req, res) => {
   });
 };
 
+/**
+ * Return a list of playlists for the authenticated user.
+ */
 export const playlists: RequestHandler = (req, res, next) => {
   const db = DB.getInstance();
   const user = User.fromExpress(req.user as Express.User);
@@ -38,6 +47,9 @@ export const playlists: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Return playlist detail along with discard options and oldest track info.
+ */
 export const playlistDetail: RequestHandler = (req, res, next) => {
   const { id } = req.params;
   const user = User.fromExpress(req.user as Express.User);
@@ -79,6 +91,9 @@ export const playlistDetail: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Update cleanup settings for a playlist.
+ */
 export const updatePlaylist: RequestHandler = (req, res, next) => {
   const { id } = req.params;
   const user = User.fromExpress(req.user as Express.User);
@@ -103,12 +118,18 @@ export const updatePlaylist: RequestHandler = (req, res, next) => {
     .catch(next);
 };
 
+/**
+ * Trigger a server-side playlist discovery run.
+ */
 export const recognize: RequestHandler = (req, res, next) => {
   recognizePlaylistsOfUser(User.fromExpress(req.user as Express.User))
     .then((result) => res.json(result))
     .catch(next);
 };
 
+/**
+ * Delete the current account after explicit confirmation.
+ */
 export const deleteAccount: RequestHandler = (req, res, next) => {
   const { sure } = req.body as { sure?: string };
   if (sure !== "Yes, I'm sure!") {

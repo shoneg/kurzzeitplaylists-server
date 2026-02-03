@@ -7,6 +7,9 @@ import playlistRouter from './playlists';
 import { authErrorHandler, spotifyErrorHandler } from './errorHandlers';
 import apiRouter from './api';
 
+/**
+ * Root router wiring for server-rendered pages and JSON APIs.
+ */
 const rootRouter = Router();
 
 rootRouter.use(bodyParser.urlencoded({ extended: true }));

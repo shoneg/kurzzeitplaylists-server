@@ -1,3 +1,4 @@
+/** Public domain model exports. */
 import Playlist from './playlist';
 import SpotifyCredentials from './spotifyCredentials';
 import User from './user';

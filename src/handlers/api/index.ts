@@ -9,6 +9,9 @@ import {
   updatePlaylist,
 } from './service';
 
+/**
+ * JSON API routes consumed by the client.
+ */
 const apiRouter = Router();
 
 apiRouter.get('/session', session);

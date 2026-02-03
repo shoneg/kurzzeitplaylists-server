@@ -9,6 +9,9 @@ import {
   onLogin,
 } from './service';
 
+/**
+ * Routes for login, logout, and account deletion flows.
+ */
 const authRouter = Router();
 
 authRouter.get('/', authView);
