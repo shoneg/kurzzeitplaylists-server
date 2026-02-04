@@ -4,6 +4,7 @@ import { getSpotify } from '../../spotifyApi';
 import DB from '../../db';
 import { Playlist, User } from '../../types';
 import Logger, { DEBUG } from '../../utils/logger';
+import { buildServerPath } from '../../config';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
@@ -159,7 +160,7 @@ export const submitEditPlaylist: RequestHandler = (req, res, next) => {
           },
           user
         )
-        .then(() => res.redirect('/playlists'))
+        .then(() => res.redirect(buildServerPath('/playlists')))
         .catch(next)
     )
     .catch(next);
@@ -171,7 +172,7 @@ export const submitEditPlaylist: RequestHandler = (req, res, next) => {
 export const recognize: RequestHandler = (req, res, next) => {
   recognizePlaylistsOfUser(User.fromExpress(req.user as Express.User))
     .then(({ newPlaylists, deletedPlaylists }) =>
-      res.redirect('/playlists?newOnes=' + newPlaylists + '&deleted=' + deletedPlaylists)
+      res.redirect(buildServerPath('/playlists') + '?newOnes=' + newPlaylists + '&deleted=' + deletedPlaylists)
     )
     .catch(next);
 };

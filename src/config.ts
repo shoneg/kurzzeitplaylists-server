@@ -94,6 +94,19 @@ export const URI = (() => {
 })();
 
 /**
+ * Optional base path when the server is mounted behind a path prefix.
+ * Example: /kzp-api
+ */
+export const SERVER_BASE_PATH = (() => {
+  const raw = getEnvVariable('SERVER_BASE_PATH', '');
+  if (!raw) {
+    return '';
+  }
+  const withSlash = raw.startsWith('/') ? raw : `/${raw}`;
+  return withSlash.length > 1 && withSlash.endsWith('/') ? withSlash.slice(0, -1) : withSlash;
+})();
+
+/**
  * Normalize user-provided paths to always start with a leading slash.
  */
 const ensureLeadingSlash = (value: string): string => {
@@ -101,6 +114,17 @@ const ensureLeadingSlash = (value: string): string => {
     return '/';
   }
   return value.startsWith('/') ? value : `/${value}`;
+};
+
+/**
+ * Prefix a server-local path with the configured base path when needed.
+ */
+export const buildServerPath = (path: string): string => {
+  const normalizedPath = ensureLeadingSlash(path);
+  if (!SERVER_BASE_PATH) {
+    return normalizedPath;
+  }
+  return `${SERVER_BASE_PATH}${normalizedPath}`;
 };
 
 /**

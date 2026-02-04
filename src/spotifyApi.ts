@@ -1,4 +1,4 @@
-import { CLIENT_ID, CLIENT_SECRET, HOST, PROXY_PORT, RUNNING_WITH_TLS, URI } from './config';
+import { CLIENT_ID, CLIENT_SECRET, HOST, PROXY_PORT, RUNNING_WITH_TLS, URI, buildServerPath } from './config';
 import { Strategy as SpotifyStrategy } from 'passport-spotify';
 import { User } from './types';
 import moment from 'moment';
@@ -9,7 +9,7 @@ import Logger, { DEBUG } from './utils/logger';
 const logger = new Logger(DEBUG.WARN, '/spotifyApi');
 
 /** OAuth callback path registered with Spotify. */
-const authCallbackPath = Object.freeze('/auth/callback');
+const authCallbackPath = Object.freeze(buildServerPath('/auth/callback'));
 /**
  * Full redirect URI passed to Spotify for OAuth.
  * Uses `URI` as canonical origin when configured to avoid host mismatches.

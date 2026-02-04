@@ -1,5 +1,5 @@
 import { defaultErrorHandler } from './src/handlers/errorHandlers';
-import { CLIENT_APP_URL, HOST, PORT, RUNNING_WITH_TLS } from './src/config';
+import { HOST, PORT, RUNNING_WITH_TLS, SERVER_BASE_PATH } from './src/config';
 import { initPassport } from './src/passport';
 import consolidate from 'consolidate';
 import express from 'express';
@@ -49,22 +49,8 @@ User.startWaitingForCleanup();
 
 app.engine('html', consolidate.nunjucks);
 
-// CORS for client <-> API with cookies
-app.use((req, res, next) => {
-  if (CLIENT_APP_URL) {
-    res.header('Access-Control-Allow-Origin', CLIENT_APP_URL);
-    res.header('Vary', 'Origin');
-  }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Requested-With');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
-app.use('', rootRouter);
+app.locals.basePath = SERVER_BASE_PATH;
+app.use(SERVER_BASE_PATH || '', rootRouter);
 
 app.use(defaultErrorHandler);
 

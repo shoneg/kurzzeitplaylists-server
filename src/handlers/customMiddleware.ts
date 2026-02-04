@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import moment from 'moment';
-import { URI } from '../config';
+import { URI, buildServerPath } from '../config';
 import { User } from '../types';
 import Logger, { DEBUG } from '../utils/logger';
 
@@ -22,7 +22,7 @@ export const ensureAuthenticated: RequestHandler = (req, res, next) => {
       return next();
     }
   } else {
-    res.redirect('/');
+    res.redirect(buildServerPath('/'));
   }
 };
 
@@ -32,9 +32,13 @@ export const ensureAuthenticated: RequestHandler = (req, res, next) => {
 export const ensureNextcloudLogin: RequestHandler = (req, res, next) => {
   const { token } = req.query;
   if (!token) {
-    res.status(400).send("<p>Missing token! Got to the <a href='/'>start page</a> to get one.</p>");
+    res
+      .status(400)
+      .send(`<p>Missing token! Got to the <a href='${buildServerPath('/')}'>start page</a> to get one.</p>`);
   } else if (!User.isInWaitingFor(token.toString())) {
-    res.status(401).send("<p>You're token expired. Try to <a href='/auth'>login</a> again.</p>");
+    res
+      .status(401)
+      .send(`<p>You're token expired. Try to <a href='${buildServerPath('/auth')}'>login</a> again.</p>`);
   } else {
     next();
   }

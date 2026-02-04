@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import playlistRouter from './playlists';
 import { authErrorHandler, spotifyErrorHandler } from './errorHandlers';
 import apiRouter from './api';
+import { buildServerPath } from '../config';
 
 /**
  * Root router wiring for server-rendered pages and JSON APIs.
@@ -19,9 +20,9 @@ rootRouter.use(reroute);
 
 rootRouter.get('/', (req, res) => {
   if (!req.user) {
-    res.redirect('/auth');
+    res.redirect(buildServerPath('/auth'));
   } else {
-    res.redirect('/playlists');
+    res.redirect(buildServerPath('/playlists'));
   }
 });
 

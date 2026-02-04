@@ -27,12 +27,12 @@ export const initPassport: () => void = () => {
   app.use(
     session({
       cookie: {
-        sameSite: 'none',
+        sameSite: 'lax',
         httpOnly: true,
         maxAge: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
         secure: RUNNING_WITH_TLS,
       },
-      name: 'kzp_sid',
+      name: 'sid',
       resave: false,
       saveUninitialized: true,
       secret: SESSION_SECRET,

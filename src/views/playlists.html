@@ -12,12 +12,12 @@
   {% endif %} {% if user %}
   <p>Hello {{ user.displayName }}</p>
   <p>
-    <a href="/playlists/recognize">Recognize Playlists</a> | <a href="/auth/logout">Log Out</a> |
-    <a href="/auth/delete">Delete Account</a>
+    <a href="{{ basePath }}/playlists/recognize">Recognize Playlists</a> | <a href="{{ basePath }}/auth/logout">Log Out</a> |
+    <a href="{{ basePath }}/auth/delete">Delete Account</a>
   </p>
   <ul>
     {% for playlist in playlists %}
-    <li><a href="/playlists/{{playlist.spotifyId}}">{{ playlist.name }}</a></li>
+    <li><a href="{{ basePath }}/playlists/{{playlist.spotifyId}}">{{ playlist.name }}</a></li>
     {% else %} Seems like you don't have any playlist… {% endfor %}
   </ul>
   {% endif %}
