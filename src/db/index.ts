@@ -2,7 +2,6 @@ import { readFile } from 'fs';
 import session, { Store } from 'express-session';
 import moment from 'moment';
 import mysql, { FieldPacket, OkPacket, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import type { Pool as MysqlPool } from 'mysql2';
 import MySQLSession from 'express-mysql-session';
 
 import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, SESSION_TIMEOUT } from '../config';
@@ -94,11 +93,12 @@ class DB {
           rej(readFileErr);
           return;
         }
-        const creationPromises = creationScript
+        const statements = creationScript
           .toString()
           .split(';')
-          .slice(0, creationScript.toString().split(';').length - 1)
-          .map((statement) => this.pool.query(statement));
+          .map((statement) => statement.trim())
+          .filter((statement) => statement.length > 0);
+        const creationPromises = statements.map((statement) => this.pool.query(statement));
         Promise.all(creationPromises)
           .then(() => res())
           .catch(rej);
@@ -111,15 +111,17 @@ class DB {
    */
   public getSessionStore(): Store {
     if (!DB.sessionStore) {
-      const store = new MySQLStore(
-        {
-          checkExpirationInterval: moment.duration(60, 's').asMilliseconds(),
-          expiration: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
-        },
-        this.pool as unknown as MysqlPool
-      );
+      const store = new MySQLStore({
+        host: DB_HOST,
+        user: DB_USER,
+        password: DB_PASSWORD,
+        database: DB_NAME,
+        port: DB_PORT,
+        checkExpirationInterval: moment.duration(60, 's').asMilliseconds(),
+        expiration: moment.duration(SESSION_TIMEOUT, 's').asMilliseconds(),
+      });
       if (typeof (store as unknown as { on?: (evt: string, cb: (err: Error) => void) => void }).on === 'function') {
-        (store as unknown as { on: (evt: string, cb: (err: Error) => void) => void }).on('error', (err) => {
+        (store as unknown as { on: (evt: string, cb: (err: Error) => void) => void }).on('error', (err: Error) => {
           logger.error('Got error while init of sessionStore:', err);
         });
       }
