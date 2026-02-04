@@ -7,6 +7,18 @@ import Logger, { DEBUG } from '../../utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/handlers/playlists');
 
+const asString = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+const asNumberOrNull = (value: string | string[] | undefined): number | null => {
+  const str = asString(value);
+  if (!str) {
+    return null;
+  }
+  const parsed = Number(str);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 /**
  * Sync the user's playlists against Spotify and return counts of changes.
  */
@@ -69,10 +81,9 @@ export const recognizePlaylistsOfUser = (user: User): Promise<{ newPlaylists: nu
 export const playlistsView: RequestHandler = (req, res, next) => {
   const db = DB.getInstance();
   const user = User.fromExpress(req.user as Express.User);
-  const recognizeRes =
-    req.query.newOnes && req.query.deleted
-      ? { newPlaylists: req.query.newOnes, deletedPlaylists: req.query.deleted }
-      : undefined;
+  const newOnes = asString(req.query.newOnes as string | string[] | undefined);
+  const deleted = asString(req.query.deleted as string | string[] | undefined);
+  const recognizeRes = newOnes && deleted ? { newPlaylists: newOnes, deletedPlaylists: deleted } : undefined;
   db.user
     .getPlaylists(user, 'lexicographic_az')
     .then((playlists) => {
@@ -85,7 +96,11 @@ export const playlistsView: RequestHandler = (req, res, next) => {
  * Render the playlist edit screen (legacy UI).
  */
 export const editPlaylistView: RequestHandler = (req, res, next) => {
-  const { id } = req.params;
+  const id = asString(req.params.id);
+  if (!id) {
+    res.status(400).send('Missing playlist id');
+    return;
+  }
   const user = User.fromExpress(req.user as Express.User);
   const db = DB.getInstance();
   db.playlist
@@ -121,9 +136,15 @@ export const editPlaylistView: RequestHandler = (req, res, next) => {
  * Persist updated playlist cleanup settings.
  */
 export const submitEditPlaylist: RequestHandler = (req, res, next) => {
-  const { id } = req.params;
+  const id = asString(req.params.id);
+  if (!id) {
+    res.status(400).send('Missing playlist id');
+    return;
+  }
   const user = User.fromExpress(req.user as Express.User);
-  const { maxAge, maxTracks, discardPlaylist } = req.body;
+  const maxAge = asNumberOrNull(req.body.maxAge as string | string[] | undefined);
+  const maxTracks = asNumberOrNull(req.body.maxTracks as string | string[] | undefined);
+  const discardPlaylist = asString(req.body.discardPlaylist as string | string[] | undefined);
   const db = DB.getInstance();
   db.playlist
     .get(id)
@@ -132,8 +153,8 @@ export const submitEditPlaylist: RequestHandler = (req, res, next) => {
         .update(
           {
             spotifyId: id,
-            maxTrackAge: maxAge ? maxAge : null,
-            maxTracks: maxTracks ? maxTracks : null,
+            maxTrackAge: maxAge,
+            maxTracks: maxTracks,
             discardPlaylist: discardPlaylist ? discardPlaylist : null,
           },
           user

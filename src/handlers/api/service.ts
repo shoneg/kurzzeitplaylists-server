@@ -4,6 +4,9 @@ import DB from '../../db';
 import { Playlist, User } from '../../types';
 import { recognizePlaylistsOfUser } from '../playlists/service';
 
+const asString = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
 /**
  * Convert a playlist model to a client-safe summary payload.
  */
@@ -51,7 +54,11 @@ export const playlists: RequestHandler = (req, res, next) => {
  * Return playlist detail along with discard options and oldest track info.
  */
 export const playlistDetail: RequestHandler = (req, res, next) => {
-  const { id } = req.params;
+  const id = asString(req.params.id);
+  if (!id) {
+    res.status(400).json({ message: 'Missing playlist id' });
+    return;
+  }
   const user = User.fromExpress(req.user as Express.User);
   const db = DB.getInstance();
 
@@ -95,7 +102,11 @@ export const playlistDetail: RequestHandler = (req, res, next) => {
  * Update cleanup settings for a playlist.
  */
 export const updatePlaylist: RequestHandler = (req, res, next) => {
-  const { id } = req.params;
+  const id = asString(req.params.id);
+  if (!id) {
+    res.status(400).json({ message: 'Missing playlist id' });
+    return;
+  }
   const user = User.fromExpress(req.user as Express.User);
   const { maxAge, maxTracks, discardPlaylist } = req.body as {
     maxAge?: number | null;
