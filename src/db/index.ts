@@ -10,6 +10,7 @@ import Logger, { DEBUG } from '../utils/logger';
 import User from './user';
 import Credentials from './credentials';
 import Playlist from './playlist';
+import PlaylistAggregation from './playlistAggregation';
 
 const logger = new Logger(DEBUG.WARN, '/db');
 
@@ -24,6 +25,7 @@ class DB {
 
   private _credentials: Credentials;
   private _playlist: Playlist;
+  private _playlistAggregation: PlaylistAggregation;
   private _user: User;
   private pool: Pool;
 
@@ -37,6 +39,7 @@ class DB {
     });
     this._credentials = new Credentials(this.pool);
     this._playlist = new Playlist(this.pool);
+    this._playlistAggregation = new PlaylistAggregation(this.pool);
     this._user = new User(this.pool);
   }
 
@@ -59,6 +62,9 @@ class DB {
   }
   public get user(): User {
     return this._user;
+  }
+  public get playlistAggregation(): PlaylistAggregation {
+    return this._playlistAggregation;
   }
 
   /**
@@ -100,6 +106,17 @@ class DB {
           .filter((statement) => statement.length > 0);
         const creationPromises = statements.map((statement) => this.pool.query(statement));
         Promise.all(creationPromises)
+          .then(() =>
+            this.pool
+              .query('ALTER TABLE playlist_aggregation_source DROP FOREIGN KEY fkAggregationSourcePlaylist')
+              .then(() => {})
+              .catch((err: { code?: string }) => {
+                if (err.code === 'ER_CANT_DROP_FIELD_OR_KEY' || err.code === 'ER_NO_SUCH_TABLE') {
+                  return;
+                }
+                throw err;
+              })
+          )
           .then(() => res())
           .catch(rej);
       });

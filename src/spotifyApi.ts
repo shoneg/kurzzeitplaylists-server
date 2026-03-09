@@ -7,6 +7,7 @@ import DB from './db';
 import Logger, { DEBUG } from './utils/logger';
 
 const logger = new Logger(DEBUG.WARN, '/spotifyApi');
+let clientCredentialsCache: { accessToken: string; expiresAt: moment.Moment } | undefined;
 
 /** OAuth callback path registered with Spotify. */
 const authCallbackPath = Object.freeze(buildServerPath('/auth/callback'));
@@ -37,14 +38,12 @@ export const strategy = new SpotifyStrategy(
           const expiresAt = moment().add(expires_in, 's');
           const newUser: User = new User([accessToken, expiresAt, refreshToken, id], displayName, id);
           if (loadedUser) {
-            if (loadedUser.credentials.expiresAt.isBefore(moment().add(30, 's'))) {
-              // Refresh near-expiring credentials to reduce redirect loops.
-              db.user.update(newUser)
-                .then((updatedUser) => done(null, updatedUser))
-                .catch(done);
-            } else {
-              done(null, loadedUser);
-            }
+            // Always persist fresh credentials from the OAuth callback.
+            // This ensures newly granted scopes are immediately usable.
+            db.user
+              .update(newUser)
+              .then((updatedUser) => done(null, updatedUser))
+              .catch(done);
           } else {
             db.user
               .insert(newUser)
@@ -68,6 +67,29 @@ export const getSpotify = (arg: { accessToken: string; refreshToken: string } | 
     accessToken: (arg as User).credentials?.accessToken || (arg as { accessToken: string }).accessToken,
     refreshToken: (arg as User).credentials?.refreshToken || (arg as { refreshToken: string }).refreshToken,
   });
+
+/**
+ * Create a Spotify API client authenticated via client credentials.
+ * Useful for reading public resources that might not be visible via a user token.
+ */
+export const getSpotifyClientCredentials = async (): Promise<SpotifyWebApi> => {
+  const spotify = new SpotifyWebApi({
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    redirectUri,
+  });
+  if (clientCredentialsCache && clientCredentialsCache.expiresAt.isAfter(moment().add(30, 's'))) {
+    spotify.setAccessToken(clientCredentialsCache.accessToken);
+    return spotify;
+  }
+  const grantResult = await spotify.clientCredentialsGrant();
+  clientCredentialsCache = {
+    accessToken: grantResult.body.access_token,
+    expiresAt: moment().add(grantResult.body.expires_in, 's'),
+  };
+  spotify.setAccessToken(clientCredentialsCache.accessToken);
+  return spotify;
+};
 
 /**
  * Refresh all sessions that expire before the given time.

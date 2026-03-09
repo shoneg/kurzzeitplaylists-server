@@ -111,10 +111,11 @@ class Playlist {
     id: string,
     offset = 0,
     limit = 50,
-    itemFields = 'added_at'
+    itemFields = 'added_at',
+    market?: string
   ): Promise<SpotifyApi.PlaylistTrackObject[]> => {
     return spotify
-      .getPlaylistTracks(id, { offset, limit, fields: `items(${itemFields}),next` })
+      .getPlaylistTracks(id, { offset, limit, market, fields: `items(${itemFields}),next` })
       .then((result) => {
         if (result.statusCode !== 200) {
           const body = result.body as { error?: { status?: number; message?: string } | undefined };
@@ -133,8 +134,8 @@ class Playlist {
             `nextURL='${nextURL}' doesn't contain nextOffset (${nextOffset}) or nextLimit (${nextLimit})`
           );
         }
-        return this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit), itemFields).then((nextResult) =>
-          nextResult.concat(result.body.items)
+        return this.getTracks(spotify, id, parseInt(nextOffset), parseInt(nextLimit), itemFields, market).then(
+          (nextResult) => nextResult.concat(result.body.items)
         );
       });
   };

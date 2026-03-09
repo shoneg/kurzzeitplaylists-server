@@ -1,5 +1,6 @@
 import moment from 'moment';
 import SpotifyWebApi from 'spotify-web-api-node';
+import { aggregateAllConfiguredPlaylists } from './aggregation';
 import DB from './db';
 import { getSpotify, refreshAllSessions } from './spotifyApi';
 import { Playlist } from './types';
@@ -143,11 +144,30 @@ export const trackDeletion = () => {
 };
 
 /**
+ * Aggregate configured playlist unions and then run cleanup rules.
+ */
+export const aggregateThenCleanup = (deps?: {
+  aggregateAllConfiguredPlaylists?: typeof aggregateAllConfiguredPlaylists;
+  trackDeletion?: typeof trackDeletion;
+}) => {
+  const aggregatePlaylists = deps?.aggregateAllConfiguredPlaylists ?? aggregateAllConfiguredPlaylists;
+  const cleanup = deps?.trackDeletion ?? trackDeletion;
+  logger.info('Start aggregation + cleanup maintenance cycle');
+  aggregatePlaylists()
+    .catch((err) => {
+      logger.error('Playlist aggregation cycle failed:', err);
+    })
+    .finally(() => {
+      cleanup();
+    });
+};
+
+/**
  * Start scheduled background tasks.
  */
 const cron = () => {
   setInterval(refreshSessions, d(30, 'm'));
-  setInterval(trackDeletion, d(1, 'h'));
+  setInterval(aggregateThenCleanup, d(1, 'h'));
 };
 
 export default cron;

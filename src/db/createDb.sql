@@ -27,3 +27,17 @@ CREATE TABLE IF NOT EXISTS playlist(
     SET NULL ON UPDATE CASCADE,
         CONSTRAINT fkUser FOREIGN KEY(owner) REFERENCES user(spotifyId) ON DELETE CASCADE ON UPDATE CASCADE
 );
+CREATE TABLE IF NOT EXISTS playlist_aggregation(
+    targetSpotifyId CHAR(25) NOT NULL,
+    mode VARCHAR(20) NOT NULL,
+    PRIMARY KEY(targetSpotifyId),
+    CONSTRAINT fkAggregationTarget FOREIGN KEY(targetSpotifyId) REFERENCES playlist(spotifyId) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE IF NOT EXISTS playlist_aggregation_source(
+    targetSpotifyId CHAR(25) NOT NULL,
+    sourceSpotifyId CHAR(25) NOT NULL,
+    position INT NOT NULL,
+    PRIMARY KEY(targetSpotifyId, sourceSpotifyId),
+    UNIQUE KEY uniqTargetPosition(targetSpotifyId, position),
+    CONSTRAINT fkAggregationSourceTarget FOREIGN KEY(targetSpotifyId) REFERENCES playlist_aggregation(targetSpotifyId) ON DELETE CASCADE ON UPDATE CASCADE
+);

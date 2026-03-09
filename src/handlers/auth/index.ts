@@ -21,7 +21,7 @@ authRouter.post('/delete', ensureAuthenticated, deleteAccount);
 authRouter.get(
   '/login',
   passport.authenticate('spotify', {
-    scope: ['playlist-read-private', 'playlist-modify-private'],
+    scope: ['playlist-read-private', 'playlist-read-collaborative', 'playlist-modify-private'],
   })
 );
 authRouter.get('/callback', passport.authenticate('spotify', { failureRedirect: '..' }), onLogin);

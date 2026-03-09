@@ -16,6 +16,13 @@ export type PlaylistModel = {
   spotifyId: string;
 };
 
+export type PlaylistAggregationModel = {
+  mode: 'exact_union' | 'add_missing';
+  ownerId: string;
+  sourceSpotifyId: string | null;
+  targetSpotifyId: string;
+};
+
 export type UserModel = {
   displayName: string;
   spotifyId: string;
